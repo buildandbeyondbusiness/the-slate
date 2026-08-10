@@ -18,7 +18,7 @@ class MacControllerService {
 
   private mediaState: MediaTrackState = {
     trackName: 'Waiting for Mac Connection...',
-    artist: 'Plug USB Cable or Connect Wi-Fi',
+    artist: 'Run Start-The-Slate-Mac-Server on Mac',
     album: 'Mac Integration',
     albumArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80',
     isPlaying: false,
@@ -34,7 +34,7 @@ class MacControllerService {
     memoryUsedGB: 0,
     memoryTotalGB: 16.0,
     memoryPercentage: 0,
-    macName: 'Mac Disconnected',
+    macName: 'Connecting to Mac...',
     isConnected: false
   };
 
@@ -77,9 +77,8 @@ class MacControllerService {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('[MacController] Connected via WebSocket');
-        const connType = (this.macIp === 'localhost' || this.macIp === '127.0.0.1') ? 'USB Cable' : 'Wi-Fi Network';
-        this.setConnectedState(true, `Connected to Mac via ${connType}!`);
+        console.log('[MacController] WebSocket Connected');
+        this.setConnectedState(true, `Connected to Mac (${this.macIp})`);
       };
 
       this.ws.onmessage = (event) => {
@@ -114,33 +113,45 @@ class MacControllerService {
   }
 
   private async fetchHttpState() {
+    // 1. Try saved / configured IP
+    let success = await this.tryHttpIp(this.macIp);
+    
+    // 2. If failed and macIp is localhost, try common local subnet IP if saved
+    if (!success && this.macIp !== 'localhost') {
+      success = await this.tryHttpIp('localhost');
+    }
+
+    if (!success) {
+      this.isConnected = false;
+      this.systemSpecs = {
+        ...this.systemSpecs,
+        isConnected: false,
+        macName: `Mac Server Offline (${this.macIp})`
+      };
+      this.notifySpecs();
+    }
+  }
+
+  private async tryHttpIp(ip: string): Promise<boolean> {
     try {
-      const res = await fetch(`http://${this.macIp}:${this.port}/api/state`, {
+      const res = await fetch(`http://${ip}:${this.port}/api/state`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(2000)
+        signal: AbortSignal.timeout(1800)
       });
       if (res.ok) {
         const data = await res.json();
         if (data.systemSpecs && data.mediaState) {
           this.systemSpecs = { ...data.systemSpecs, isConnected: true };
           this.mediaState = { ...data.mediaState };
-          const connType = (this.macIp === 'localhost' || this.macIp === '127.0.0.1') ? 'USB Cable' : 'Wi-Fi Network';
-          this.setConnectedState(true, `Connected to Mac via ${connType}!`);
+          this.setConnectedState(true, `Connected to Mac (${ip})`);
           this.notifySpecs();
           this.notifyMedia();
-          return;
+          return true;
         }
       }
     } catch (err) {}
-
-    this.isConnected = false;
-    this.systemSpecs = {
-      ...this.systemSpecs,
-      isConnected: false,
-      macName: `Mac Disconnected (${this.macIp})`
-    };
-    this.notifySpecs();
+    return false;
   }
 
   private startHttpPolling() {
@@ -149,7 +160,7 @@ class MacControllerService {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
         this.fetchHttpState();
       }
-    }, 1500);
+    }, 1200);
   }
 
   private setConnectedState(connected: boolean, msg: string) {
@@ -161,15 +172,15 @@ class MacControllerService {
     this.notifySpecs();
   }
 
-  // Guaranteed Action Sender (WS -> HTTP POST -> GET Image Beacon Fallback)
+  // 3-Tier Guaranteed Action Delivery Pipeline
   public async sendAction(payload: any) {
-    // 1. Try WebSocket
+    // Tier 1: WebSocket
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(payload));
       return;
     }
 
-    // 2. Try HTTP POST
+    // Tier 2: HTTP POST
     try {
       await fetch(`http://${this.macIp}:${this.port}/api/action`, {
         method: 'POST',
@@ -179,7 +190,7 @@ class MacControllerService {
       return;
     } catch (e) {}
 
-    // 3. Guaranteed No-CORS Beacon Trigger (Sends HTTP GET request regardless of CORS/HTTPS restrictions!)
+    // Tier 3: GET Image Beacon (Unblocked by CORS / Mixed Content)
     try {
       const queryParams = new URLSearchParams();
       if (payload.action) queryParams.set('action', payload.action);
@@ -189,9 +200,7 @@ class MacControllerService {
 
       const img = new Image();
       img.src = `http://${this.macIp}:${this.port}/api/action?${queryParams.toString()}&_t=${Date.now()}`;
-    } catch (err) {
-      console.error('[MacController] Beacon error:', err);
-    }
+    } catch (err) {}
   }
 
   public launchApp(appOrCommand: string) {

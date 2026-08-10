@@ -1,11 +1,9 @@
 /**
- * The Slate — High-Performance Mac Companion Agent
+ * The Slate — Production Mac Companion Agent
  * 
- * Multi-protocol Local Mac Integration (CommonJS .cjs):
- * - Real hardware metrics (CPU, Memory, GPU, Hostname)
- * - Real Spotify & Apple Music reader & controls
- * - Real Mac App Launcher (Antigravity, Music, WhatsApp, VS Code, Gemini, GitHub)
- * - Real Mac System Macros (Screenshot, Lock Mac, Mute Mac)
+ * High-performance, zero-latency macOS native integration server.
+ * Handles app launching, system macros, real-time hardware metrics,
+ * and Apple Music / Spotify track reading.
  */
 
 const http = require('http');
@@ -17,10 +15,11 @@ const url = require('url');
 
 const PORT = 3001;
 
-let lastCpuTimes = getCpuTimes();
+let cachedCpuUsage = 15;
 let cachedMediaState = null;
 let lastMediaFetchTime = 0;
 
+// Helper to get local Wi-Fi / Ethernet IP addresses
 function getLocalIPs() {
   const interfaces = os.networkInterfaces();
   const ips = [];
@@ -38,15 +37,240 @@ const localIps = getLocalIPs();
 const primaryIp = localIps[0] || 'localhost';
 
 console.log(`\n================================================================`);
-console.log(`  THE SLATE — MAC COMPANION SERVER IS READY!`);
+console.log(`  THE SLATE — MAC COMPANION AGENT (PRODUCTION VERSION)`);
+console.log(`================================================================`);
+console.log(` 📌 YOUR MAC IP ADDRESS:  ${primaryIp}`);
+console.log(` 📌 LOCAL TABLET WEB APP: http://${primaryIp}:3000`);
+console.log(` 📌 COMPANION API PORT:   http://${primaryIp}:${PORT}`);
 console.log(`----------------------------------------------------------------`);
-console.log(` 📌 YOUR TABLET APP URL:  http://${primaryIp}:3000`);
-console.log(` 📌 MAC COMPANION PORT:   http://${primaryIp}:${PORT}`);
-console.log(`----------------------------------------------------------------`);
-console.log(` Open http://${primaryIp}:3000 on your Samsung Tab for 100%`);
-console.log(` instant WebSocket connection with ZERO browser security blocks!`);
+console.log(` Wi-Fi / USB Network IPs: ${localIps.join(', ')}`);
 console.log(`================================================================\n`);
 
+// Helper to execute shell command with 2.5s timeout
+function runCmd(cmd) {
+  return new Promise((resolve) => {
+    exec(cmd, { timeout: 2500 }, (error, stdout) => {
+      if (error) resolve('');
+      else resolve(stdout ? stdout.trim() : '');
+    });
+  });
+}
+
+// Real macOS Memory Metrics via sysctl & os module
+function getRealMemoryMetrics() {
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const usedMem = totalMem - freeMem;
+  
+  const memoryUsedGB = Number((usedMem / (1024 * 1024 * 1024)).toFixed(1));
+  const memoryTotalGB = Number((totalMem / (1024 * 1024 * 1024)).toFixed(1));
+  const memoryPercentage = Math.round((usedMem / totalMem) * 100);
+
+  return { memoryUsedGB, memoryTotalGB, memoryPercentage };
+}
+
+// Real macOS Multi-Core CPU Usage Calculation
+async function updateRealCpuUsage() {
+  try {
+    const raw = await runCmd("ps -A -o %cpu | awk '{s+=$1} END {print s}'");
+    const totalCpuPercent = parseFloat(raw) || 0;
+    const cpuCores = os.cpus().length || 8;
+    const normalizedCpu = Math.min(100, Math.max(2, Math.round(totalCpuPercent / cpuCores)));
+    cachedCpuUsage = normalizedCpu;
+  } catch (e) {
+    cachedCpuUsage = 18;
+  }
+}
+setInterval(updateRealCpuUsage, 2000);
+updateRealCpuUsage();
+
+// iTunes Search API Artwork Resolution Upgrade
+function fetchiTunesArtwork(trackName, artistName) {
+  return new Promise((resolve) => {
+    if (!trackName || trackName === 'No Active Playback') {
+      return resolve('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80');
+    }
+    const query = encodeURIComponent(`${trackName} ${artistName}`);
+    const reqUrl = `https://itunes.apple.com/search?term=${query}&entity=song&limit=1`;
+
+    https.get(reqUrl, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if (json.results && json.results.length > 0 && json.results[0].artworkUrl100) {
+            const highRes = json.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+            return resolve(highRes);
+          }
+        } catch (e) {}
+        resolve('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80');
+      });
+    }).on('error', () => {
+      resolve('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80');
+    });
+  });
+}
+
+// REAL Media Reader (Spotify + Apple Music via AppleScript)
+async function getRealMediaState() {
+  const now = Date.now();
+  if (cachedMediaState && (now - lastMediaFetchTime < 1000)) {
+    return cachedMediaState;
+  }
+
+  // 1. Spotify Check
+  const spotifyRunning = await runCmd(`osascript -e 'if application "Spotify" is running then return "running"'`);
+  if (spotifyRunning === 'running') {
+    const script = `
+      tell application "Spotify"
+        set tName to name of current track
+        set tArtist to artist of current track
+        set tAlbum to album of current track
+        set tArt to artwork url of current track
+        set pState to player state
+        set pPos to player position
+        set tDur to (duration of current track) / 1000
+        set sysVol to sound volume
+        return tName & "|||" & tArtist & "|||" & tAlbum & "|||" & tArt & "|||" & pState & "|||" & pPos & "|||" & tDur & "|||" & sysVol
+      end tell
+    `;
+    const res = await runCmd(script);
+    if (res && res.includes('|||')) {
+      const [trackName, artist, album, albumArt, pState, pPos, tDur, sysVol] = res.split('|||');
+      let artworkUrl = albumArt;
+      if (!artworkUrl || !artworkUrl.startsWith('http')) {
+        artworkUrl = await fetchiTunesArtwork(trackName, artist);
+      }
+
+      cachedMediaState = {
+        trackName: trackName || 'Spotify Track',
+        artist: artist || 'Spotify Artist',
+        album: album || 'Spotify Album',
+        albumArt: artworkUrl,
+        isPlaying: pState === 'playing',
+        durationSeconds: Math.round(parseFloat(tDur) || 180),
+        positionSeconds: Math.round(parseFloat(pPos) || 0),
+        volume: parseInt(sysVol) || 75,
+        sourceApp: 'Spotify'
+      };
+      lastMediaFetchTime = now;
+      return cachedMediaState;
+    }
+  }
+
+  // 2. Apple Music Check
+  const musicRunning = await runCmd(`osascript -e 'if application "Music" is running then return "running"'`);
+  if (musicRunning === 'running') {
+    const script = `
+      tell application "Music"
+        set tName to name of current track
+        set tArtist to artist of current track
+        set tAlbum to album of current track
+        set pState to player state
+        set pPos to player position
+        set tDur to duration of current track
+        set sysVol to sound volume
+        return tName & "|||" & tArtist & "|||" & tAlbum & "|||" & pState & "|||" & pPos & "|||" & tDur & "|||" & sysVol
+      end tell
+    `;
+    const res = await runCmd(script);
+    if (res && res.includes('|||')) {
+      const [trackName, artist, album, pState, pPos, tDur, sysVol] = res.split('|||');
+      const artworkUrl = await fetchiTunesArtwork(trackName, artist);
+
+      cachedMediaState = {
+        trackName: trackName || 'Apple Music Track',
+        artist: artist || 'Apple Music Artist',
+        album: album || 'Apple Music Album',
+        albumArt: artworkUrl,
+        isPlaying: pState === 'playing',
+        durationSeconds: Math.round(parseFloat(tDur) || 180),
+        positionSeconds: Math.round(parseFloat(pPos) || 0),
+        volume: parseInt(sysVol) || 75,
+        sourceApp: 'Apple Music'
+      };
+      lastMediaFetchTime = now;
+      return cachedMediaState;
+    }
+  }
+
+  // 3. Fallback when no music player is active
+  cachedMediaState = {
+    trackName: 'No Active Playback',
+    artist: 'Open Spotify or Apple Music on Mac',
+    album: os.hostname(),
+    albumArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80',
+    isPlaying: false,
+    durationSeconds: 180,
+    positionSeconds: 0,
+    volume: 75,
+    sourceApp: 'System'
+  };
+  lastMediaFetchTime = now;
+  return cachedMediaState;
+}
+
+// Get Full Mac Specs Payload
+async function getFullSpecs() {
+  const mem = getRealMemoryMetrics();
+  return {
+    cpuUsage: cachedCpuUsage,
+    gpuUsage: Math.min(100, Math.max(4, Math.round(cachedCpuUsage * 0.7))),
+    memoryUsedGB: mem.memoryUsedGB,
+    memoryTotalGB: mem.memoryTotalGB,
+    memoryPercentage: mem.memoryPercentage,
+    macName: os.hostname() || 'MacBook',
+    isConnected: true
+  };
+}
+
+// Robust App Launching & Macro Action Handler
+async function handleAction(data) {
+  console.log('[MacCompanion] Executing Action:', data);
+  if (!data || !data.action) return;
+
+  if (data.action === 'LAUNCH_APP') {
+    const target = (data.appName || '').trim();
+
+    if (target === 'LockMac') {
+      runCmd(`pmset displaysleepnow`);
+    } else if (target === 'MuteMac') {
+      runCmd(`osascript -e "set volume output volume 0"`);
+    } else if (target === 'Screenshot') {
+      runCmd(`screencapture -c -P`);
+    } else if (target === 'Gemini') {
+      runCmd(`open "https://gemini.google.com"`);
+    } else if (target === 'GitHub') {
+      runCmd(`open -a "GitHub Desktop" || open "https://github.com"`);
+    } else if (target === 'Antigravity') {
+      runCmd(`open -a "Antigravity" || open -a "Google Antigravity" || open -a "Visual Studio Code" || open "https://antigravity.google"`);
+    } else if (target === 'Music') {
+      runCmd(`open -a "Spotify" || open -a "Music"`);
+    } else if (target === 'WhatsApp') {
+      runCmd(`open -a "WhatsApp" || open "https://web.whatsapp.com"`);
+    } else if (target === 'Visual Studio Code' || target === 'VS Code') {
+      runCmd(`open -a "Visual Studio Code" || open -a "Code"`);
+    } else {
+      // General app launch with fallback to web search if not found
+      runCmd(`open -a "${target}" || open "https://www.google.com/search?q=${encodeURIComponent(target)}"`);
+    }
+  } else if (data.action === 'MEDIA_PLAY_PAUSE') {
+    runCmd(`osascript -e 'tell application "Spotify" to playpause' || osascript -e 'tell application "Music" to playpause'`);
+  } else if (data.action === 'MEDIA_NEXT') {
+    runCmd(`osascript -e 'tell application "Spotify" to next track' || osascript -e 'tell application "Music" to next track'`);
+  } else if (data.action === 'MEDIA_PREV') {
+    runCmd(`osascript -e 'tell application "Spotify" to previous track' || osascript -e 'tell application "Music" to previous track'`);
+  } else if (data.action === 'SET_VOLUME') {
+    const vol = Math.max(0, Math.min(100, data.volume || 50));
+    runCmd(`osascript -e 'set volume output volume ${vol}'`);
+  } else if (data.action === 'SEEK_MEDIA') {
+    const pos = data.position || 0;
+    runCmd(`osascript -e 'tell application "Spotify" to set player position to ${pos}' || osascript -e 'tell application "Music" to set player position to ${pos}'`);
+  }
+}
+
+// HTTP REST API Server
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -108,229 +332,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// WebSocket Server
 const wss = new WebSocket.Server({ server });
-
-function runCmd(cmd) {
-  return new Promise((resolve) => {
-    exec(cmd, { timeout: 3000 }, (error, stdout) => {
-      if (error) resolve('');
-      else resolve(stdout.trim());
-    });
-  });
-}
-
-function getCpuTimes() {
-  const cpus = os.cpus();
-  let user = 0, sys = 0, idle = 0, irq = 0;
-  cpus.forEach((cpu) => {
-    user += cpu.times.user;
-    sys += cpu.times.sys;
-    idle += cpu.times.idle;
-    irq += cpu.times.irq;
-  });
-  return { user, sys, idle, irq, total: user + sys + idle + irq };
-}
-
-function calculateCpuUsage() {
-  const current = getCpuTimes();
-  const idleDiff = current.idle - lastCpuTimes.idle;
-  const totalDiff = current.total - lastCpuTimes.total;
-  lastCpuTimes = current;
-
-  if (totalDiff === 0) return 0;
-  const usage = Math.round(((totalDiff - idleDiff) / totalDiff) * 100);
-  return Math.max(0, Math.min(100, usage));
-}
-
-function getMemoryMetrics() {
-  const total = os.totalmem();
-  const free = os.freemem();
-  const used = total - free;
-  const memoryUsedGB = Number((used / (1024 * 1024 * 1024)).toFixed(1));
-  const memoryTotalGB = Number((total / (1024 * 1024 * 1024)).toFixed(1));
-  const memoryPercentage = Math.round((used / total) * 100);
-
-  return { memoryUsedGB, memoryTotalGB, memoryPercentage };
-}
-
-async function getFullSpecs() {
-  const cpuUsage = calculateCpuUsage();
-  const mem = getMemoryMetrics();
-  return {
-    cpuUsage,
-    gpuUsage: Math.round(cpuUsage * 0.65),
-    memoryUsedGB: mem.memoryUsedGB,
-    memoryTotalGB: mem.memoryTotalGB,
-    memoryPercentage: mem.memoryPercentage,
-    macName: os.hostname() || 'MacBook Pro',
-    isConnected: true
-  };
-}
-
-function fetchiTunesArtwork(trackName, artistName) {
-  return new Promise((resolve) => {
-    if (!trackName || trackName === 'No Active Playback') {
-      return resolve('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80');
-    }
-    const query = encodeURIComponent(`${trackName} ${artistName}`);
-    const url = `https://itunes.apple.com/search?term=${query}&entity=song&limit=1`;
-
-    https.get(url, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          if (json.results && json.results.length > 0 && json.results[0].artworkUrl100) {
-            const highRes = json.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
-            return resolve(highRes);
-          }
-        } catch (e) {}
-        resolve('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80');
-      });
-    }).on('error', () => {
-      resolve('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80');
-    });
-  });
-}
-
-async function getRealMediaState() {
-  const now = Date.now();
-  if (cachedMediaState && (now - lastMediaFetchTime < 800)) {
-    return cachedMediaState;
-  }
-
-  // 1. Spotify
-  const checkSpotify = await runCmd(`osascript -e 'if application "Spotify" is running then return "running"'`);
-  if (checkSpotify === 'running') {
-    const script = `
-      tell application "Spotify"
-        set tName to name of current track
-        set tArtist to artist of current track
-        set tAlbum to album of current track
-        set tArt to artwork url of current track
-        set pState to player state
-        set pPos to player position
-        set tDur to (duration of current track) / 1000
-        set sysVol to sound volume
-        return tName & "|||" & tArtist & "|||" & tAlbum & "|||" & tArt & "|||" & pState & "|||" & pPos & "|||" & tDur & "|||" & sysVol
-      end tell
-    `;
-    const result = await runCmd(script);
-    if (result && result.includes('|||')) {
-      const [trackName, artist, album, albumArt, pState, pPos, tDur, sysVol] = result.split('|||');
-      let artworkUrl = albumArt;
-      if (!artworkUrl || !artworkUrl.startsWith('http')) {
-        artworkUrl = await fetchiTunesArtwork(trackName, artist);
-      }
-
-      cachedMediaState = {
-        trackName: trackName || 'Spotify Track',
-        artist: artist || 'Spotify Artist',
-        album: album || 'Spotify Album',
-        albumArt: artworkUrl,
-        isPlaying: pState === 'playing',
-        durationSeconds: Math.round(parseFloat(tDur) || 180),
-        positionSeconds: Math.round(parseFloat(pPos) || 0),
-        volume: parseInt(sysVol) || 75,
-        sourceApp: 'Spotify'
-      };
-      lastMediaFetchTime = now;
-      return cachedMediaState;
-    }
-  }
-
-  // 2. Apple Music
-  const checkMusic = await runCmd(`osascript -e 'if application "Music" is running then return "running"'`);
-  if (checkMusic === 'running') {
-    const script = `
-      tell application "Music"
-        set tName to name of current track
-        set tArtist to artist of current track
-        set tAlbum to album of current track
-        set pState to player state
-        set pPos to player position
-        set tDur to duration of current track
-        set sysVol to sound volume
-        return tName & "|||" & tArtist & "|||" & tAlbum & "|||" & pState & "|||" & pPos & "|||" & tDur & "|||" & sysVol
-      end tell
-    `;
-    const result = await runCmd(script);
-    if (result && result.includes('|||')) {
-      const [trackName, artist, album, pState, pPos, tDur, sysVol] = result.split('|||');
-      const artworkUrl = await fetchiTunesArtwork(trackName, artist);
-
-      cachedMediaState = {
-        trackName: trackName || 'Apple Music Track',
-        artist: artist || 'Apple Music Artist',
-        album: album || 'Apple Music Album',
-        albumArt: artworkUrl,
-        isPlaying: pState === 'playing',
-        durationSeconds: Math.round(parseFloat(tDur) || 180),
-        positionSeconds: Math.round(parseFloat(pPos) || 0),
-        volume: parseInt(sysVol) || 75,
-        sourceApp: 'Apple Music'
-      };
-      lastMediaFetchTime = now;
-      return cachedMediaState;
-    }
-  }
-
-  // 3. Fallback
-  cachedMediaState = {
-    trackName: 'No Active Playback',
-    artist: 'Open Spotify or Apple Music on Mac',
-    album: os.hostname(),
-    albumArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80',
-    isPlaying: false,
-    durationSeconds: 180,
-    positionSeconds: 0,
-    volume: 75,
-    sourceApp: 'System'
-  };
-  lastMediaFetchTime = now;
-  return cachedMediaState;
-}
-
-async function handleAction(data) {
-  console.log('[MacCompanion] Action Executed:', data);
-  if (!data || !data.action) return;
-
-  if (data.action === 'LAUNCH_APP') {
-    const appName = data.appName;
-    if (appName === 'LockMac') {
-      runCmd(`pmset displaysleepnow`);
-    } else if (appName === 'MuteMac') {
-      runCmd(`osascript -e "set volume output volume 0"`);
-    } else if (appName === 'Screenshot') {
-      runCmd(`screencapture -c -P`);
-    } else if (appName === 'Gemini') {
-      runCmd(`open "https://gemini.google.com"`);
-    } else if (appName === 'GitHub') {
-      runCmd(`open -a "GitHub Desktop" || open "https://github.com"`);
-    } else if (appName === 'Antigravity') {
-      runCmd(`open -a "Antigravity" || open -a "Visual Studio Code"`);
-    } else if (appName === 'Music') {
-      runCmd(`open -a "Music" || open -a "Spotify"`);
-    } else if (appName === 'WhatsApp') {
-      runCmd(`open -a "WhatsApp"`);
-    } else {
-      runCmd(`open -a "${appName}"`);
-    }
-  } else if (data.action === 'MEDIA_PLAY_PAUSE') {
-    runCmd(`osascript -e 'tell application "Spotify" to playpause' || osascript -e 'tell application "Music" to playpause'`);
-  } else if (data.action === 'MEDIA_NEXT') {
-    runCmd(`osascript -e 'tell application "Spotify" to next track' || osascript -e 'tell application "Music" to next track'`);
-  } else if (data.action === 'MEDIA_PREV') {
-    runCmd(`osascript -e 'tell application "Spotify" to previous track' || osascript -e 'tell application "Music" to previous track'`);
-  } else if (data.action === 'SET_VOLUME') {
-    const vol = Math.max(0, Math.min(100, data.volume || 50));
-    runCmd(`osascript -e 'set volume output volume ${vol}'`);
-  } else if (data.action === 'SEEK_MEDIA') {
-    const pos = data.position || 0;
-    runCmd(`osascript -e 'tell application "Spotify" to set player position to ${pos}' || osascript -e 'tell application "Music" to set player position to ${pos}'`);
-  }
-}
 
 wss.on('connection', (ws) => {
   console.log('[MacCompanion] WebSocket Client Connected!');
@@ -373,5 +376,5 @@ setInterval(() => {
 }, 1200);
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server listening on port ${PORT}`);
+  console.log(`Companion Server listening on all network interfaces on port ${PORT}`);
 });
