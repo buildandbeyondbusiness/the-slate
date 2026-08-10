@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ViewPage, MacSystemSpecs, MediaTrackState, StreamDeckCard, SettingsConfig } from './types';
 import { macController } from './services/macController';
 import { TopBarNavigation } from './components/TopBarNavigation';
-import { StandbyScreen } from './components/StandbyScreen';
+import { StandbyScreen, ClockStyle } from './components/StandbyScreen';
 import { StreamDeckScreen } from './components/StreamDeckScreen';
 import { SettingsModal } from './components/SettingsModal';
 import { MusicDetailModal } from './components/MusicDetailModal';
@@ -120,6 +120,11 @@ export function App() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<StreamDeckCard | undefined>(undefined);
   
+  // Persisted Apple Standby Clock Style
+  const [clockStyle, setClockStyle] = useState<ClockStyle>(() => {
+    return (localStorage.getItem('the_slate_clock_style') as ClockStyle) || 'minimal-hero';
+  });
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [cards, setCards] = useState<StreamDeckCard[]>(INITIAL_CARDS);
   const [ipInput, setIpInput] = useState('');
@@ -155,8 +160,19 @@ export function App() {
     enableHaptics: true
   });
 
-  // Global Auto-Fullscreen Trigger on First Touch / Click (No button click needed!)
+  const handleClockStyleChange = (newStyle: ClockStyle) => {
+    setClockStyle(newStyle);
+    localStorage.setItem('the_slate_clock_style', newStyle);
+  };
+
+  // 3-Second Automatic Fullscreen Trigger Timer after server/page loads!
   useEffect(() => {
+    const fsTimer = setTimeout(() => {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    }, 3000);
+
     const triggerAutoFullscreen = () => {
       if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
@@ -167,6 +183,7 @@ export function App() {
     window.addEventListener('click', triggerAutoFullscreen, { once: true });
 
     return () => {
+      clearTimeout(fsTimer);
       window.removeEventListener('touchstart', triggerAutoFullscreen);
       window.removeEventListener('click', triggerAutoFullscreen);
     };
@@ -292,6 +309,8 @@ export function App() {
           <StandbyScreen
             macSpecs={macSpecs}
             mediaState={mediaState}
+            clockStyle={clockStyle}
+            onClockStyleChange={handleClockStyleChange}
             onTogglePlayPause={() => macController.togglePlayPause()}
             onNextTrack={() => macController.nextTrack()}
             onPrevTrack={() => macController.previousTrack()}
