@@ -164,7 +164,7 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: '4px' }}>
             <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#F1F3F4', lineHeight: 1 }}>{battLevel}%</span>
             <span style={{ fontSize: '0.62rem', fontWeight: 600, color: ringColor, marginTop: '2px' }}>
-              {isCharging ? 'CHARGING' : isLowPower ? 'LOW POWER' : 'BATTERY'}
+              {isCharging ? 'CHARGING' : 'BATTERY'}
             </span>
           </div>
         </button>
