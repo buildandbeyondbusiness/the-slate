@@ -11,84 +11,74 @@ import { ToastNotification } from './components/ToastNotification';
 
 const INITIAL_CARDS: StreamDeckCard[] = [
   {
-    id: 'card_vscode',
-    title: 'VS Code',
-    subtitle: 'Code Editor',
+    id: 'card_antigravity',
+    title: 'Antigravity',
+    subtitle: 'AI Coding Assistant',
     iconName: 'Code',
     category: 'app',
-    targetAppOrCommand: 'Visual Studio Code',
+    targetAppOrCommand: 'Antigravity',
     accentColor: '#38bdf8',
+    badgeText: 'AI'
+  },
+  {
+    id: 'card_music',
+    title: 'Music',
+    subtitle: 'Spotify / Apple Music',
+    iconName: 'PlayCircle',
+    category: 'app',
+    targetAppOrCommand: 'Music',
+    accentColor: '#f43f5e',
+    badgeText: 'AUDIO'
+  },
+  {
+    id: 'card_whatsapp',
+    title: 'WhatsApp',
+    subtitle: 'Messaging App',
+    iconName: 'Globe',
+    category: 'app',
+    targetAppOrCommand: 'WhatsApp',
+    accentColor: '#10b981',
+    badgeText: 'CHAT'
+  },
+  {
+    id: 'card_vscode',
+    title: 'VS Code',
+    subtitle: 'Visual Studio Code',
+    iconName: 'Terminal',
+    category: 'app',
+    targetAppOrCommand: 'Visual Studio Code',
+    accentColor: '#818cf8',
     badgeText: 'IDE'
   },
   {
-    id: 'card_spotify',
-    title: 'Spotify',
-    subtitle: 'Music Player',
-    iconName: 'PlayCircle',
-    category: 'app',
-    targetAppOrCommand: 'Spotify',
-    accentColor: '#10b981',
-    badgeText: 'AUDIO'
-  },
-  {
-    id: 'card_arc',
-    title: 'Arc Browser',
-    subtitle: 'Web Browser',
-    iconName: 'Globe',
-    category: 'app',
-    targetAppOrCommand: 'Arc',
-    accentColor: '#f43f5e',
-    badgeText: 'WEB'
-  },
-  {
-    id: 'card_terminal',
-    title: 'Terminal / iTerm',
-    subtitle: 'Shell CLI',
-    iconName: 'Terminal',
-    category: 'app',
-    targetAppOrCommand: 'Terminal',
-    accentColor: '#818cf8',
-    badgeText: 'CLI'
-  },
-  {
-    id: 'card_figma',
-    title: 'Figma',
-    subtitle: 'UI/UX Design',
-    iconName: 'Palette',
-    category: 'app',
-    targetAppOrCommand: 'Figma',
-    accentColor: '#ec4899',
-    badgeText: 'DESIGN'
-  },
-  {
-    id: 'card_notion',
-    title: 'Notion',
-    subtitle: 'Notes & Workspace',
+    id: 'card_gemini',
+    title: 'Gemini',
+    subtitle: 'Google AI Portal',
     iconName: 'Layers',
     category: 'app',
-    targetAppOrCommand: 'Notion',
+    targetAppOrCommand: 'Gemini',
     accentColor: '#a855f7',
-    badgeText: 'NOTES'
+    badgeText: 'AI'
   },
   {
-    id: 'card_launch_dev',
-    title: 'Launch Dev Stack',
-    subtitle: 'VS Code + Terminal',
-    iconName: 'Code',
-    category: 'macro',
-    targetAppOrCommand: 'LaunchDev',
-    accentColor: '#38bdf8',
-    badgeText: 'DEV'
+    id: 'card_github',
+    title: 'GitHub',
+    subtitle: 'Code Repositories',
+    iconName: 'Globe',
+    category: 'app',
+    targetAppOrCommand: 'GitHub',
+    accentColor: '#f59e0b',
+    badgeText: 'GIT'
   },
   {
-    id: 'card_mute_mic',
-    title: 'Mute Mic',
-    subtitle: 'Audio Privacy',
-    iconName: 'VolumeX',
+    id: 'card_screenshot',
+    title: 'Screenshot',
+    subtitle: 'Capture Mac Screen',
+    iconName: 'Palette',
     category: 'macro',
-    targetAppOrCommand: 'MuteMic',
-    accentColor: '#f43f5e',
-    badgeText: 'AUDIO'
+    targetAppOrCommand: 'Screenshot',
+    accentColor: '#ec4899',
+    badgeText: 'MACRO'
   },
   {
     id: 'card_lock',
@@ -97,8 +87,18 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     iconName: 'Lock',
     category: 'macro',
     targetAppOrCommand: 'LockMac',
-    accentColor: '#f59e0b',
+    accentColor: '#38bdf8',
     badgeText: 'SECURITY'
+  },
+  {
+    id: 'card_mute',
+    title: 'Mute Mac',
+    subtitle: 'Mute System Audio',
+    iconName: 'VolumeX',
+    category: 'macro',
+    targetAppOrCommand: 'MuteMac',
+    accentColor: '#f43f5e',
+    badgeText: 'AUDIO'
   }
 ];
 
@@ -124,7 +124,7 @@ export function App() {
   });
 
   const [mediaState, setMediaState] = useState<MediaTrackState>({
-    trackName: 'Waiting for Mac Connection...',
+    trackName: 'Waiting for Mac Music...',
     artist: 'Open Spotify or Apple Music on Mac',
     album: 'Mac Integration',
     albumArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80',

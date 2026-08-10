@@ -2,9 +2,10 @@
  * The Slate — High-Performance Mac Companion Agent
  * 
  * Multi-protocol Local Mac Integration (CommonJS .cjs):
- * - WebSocket Server (port 3001)
- * - HTTP REST API (POST + GET query string support for 100% CORS & Mixed Content bypass)
- * - Zero-CPU Idle Polling
+ * - Real hardware metrics (CPU, Memory, GPU, Hostname)
+ * - Real Spotify & Apple Music reader & controls
+ * - Real Mac App Launcher (Antigravity, Music, WhatsApp, VS Code, Gemini, GitHub)
+ * - Real Mac System Macros (Screenshot, Lock Mac, Mute Mac)
  */
 
 const http = require('http');
@@ -84,7 +85,6 @@ const server = http.createServer(async (req, res) => {
         }
       });
     } else if (req.method === 'GET') {
-      // Support GET query parameters for no-cors beacon fallback!
       try {
         const query = parsedUrl.query;
         if (query.action) {
@@ -300,18 +300,20 @@ async function handleAction(data) {
     const appName = data.appName;
     if (appName === 'LockMac') {
       runCmd(`pmset displaysleepnow`);
-    } else if (appName === 'SleepMac') {
-      runCmd(`osascript -e 'tell application "System Events" to sleep'`);
-    } else if (appName === 'MuteMic') {
-      runCmd(`osascript -e "set volume input volume 0"`);
-    } else if (appName === 'UnmuteMic') {
-      runCmd(`osascript -e "set volume input volume 100"`);
-    } else if (appName === 'MuteAudio') {
+    } else if (appName === 'MuteMac') {
       runCmd(`osascript -e "set volume output volume 0"`);
-    } else if (appName === 'LaunchDev') {
-      runCmd(`open -a "Visual Studio Code" && open -a "Terminal"`);
     } else if (appName === 'Screenshot') {
-      runCmd(`screencapture -c`);
+      runCmd(`screencapture -c -P`);
+    } else if (appName === 'Gemini') {
+      runCmd(`open "https://gemini.google.com"`);
+    } else if (appName === 'GitHub') {
+      runCmd(`open -a "GitHub Desktop" || open "https://github.com"`);
+    } else if (appName === 'Antigravity') {
+      runCmd(`open -a "Antigravity" || open -a "Visual Studio Code"`);
+    } else if (appName === 'Music') {
+      runCmd(`open -a "Music" || open -a "Spotify"`);
+    } else if (appName === 'WhatsApp') {
+      runCmd(`open -a "WhatsApp"`);
     } else {
       runCmd(`open -a "${appName}"`);
     }
