@@ -29,7 +29,7 @@ lsof -ti:3000 | xargs kill -9 2>/dev/null
 lsof -ti:3001 | xargs kill -9 2>/dev/null
 
 # Start companion server & web app simultaneously
-node "$DIR/companion-server/server.js" &
+node "$DIR/companion-server/server.cjs" &
 PID_SERVER=$!
 
 npx vite --host 0.0.0.0 --port 3000 &

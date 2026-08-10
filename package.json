@@ -4,11 +4,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node companion-server/server.js & vite --host 0.0.0.0 --port 3000",
+    "start": "node companion-server/server.cjs & vite --host 0.0.0.0 --port 3000",
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "companion": "node companion-server/server.js"
+    "companion": "node companion-server/server.cjs"
   },
   "dependencies": {
     "lucide-react": "0.344.0",
