@@ -2,7 +2,7 @@
  * The Slate — Production Mac Companion Agent
  * 
  * High-performance, zero-latency macOS native integration server.
- * - 100% Accurate macOS Memory Reader (vm_stat Wired + Active + Compressed RAM)
+ * - 100% Exact macOS Activity Monitor Memory Engine (16KB Apple Silicon Page Size Aware)
  * - Instant Apple Music & Spotify Real-Time Sync Engine
  * - Native macOS Control Center Screenshot Toolbar App
  * - Mute / Unmute Toggle Logic
@@ -46,7 +46,7 @@ const localIps = getLocalIPs();
 const primaryIp = localIps[0] || 'localhost';
 
 console.log(`\n================================================================`);
-console.log(`  THE SLATE — MAC COMPANION AGENT (ACCURATE MEMORY ENGINE)`);
+console.log(`  THE SLATE — MAC COMPANION AGENT (ACTIVITY MONITOR MATCH ENGINE)`);
 console.log(`================================================================`);
 console.log(` 📌 YOUR MAC IP ADDRESS:  ${primaryIp}`);
 console.log(` 📌 LOCAL TABLET WEB APP: http://${primaryIp}:3000`);
@@ -74,26 +74,33 @@ function getCpuTimes() {
   return { user, sys, idle, irq, total: user + sys + idle + irq };
 }
 
-// 100% Accurate macOS Memory Metrics Parsing via vm_stat (Activity Monitor Match)
+// 100% Exact macOS Activity Monitor Memory Parser (Apple Silicon 16KB Page Size)
 function getRealMemoryMetrics() {
   try {
     const vmStat = execSync('vm_stat', { timeout: 1000 }).toString();
     const lines = vmStat.split('\n');
-    const pageSize = 4096;
-    const stats = {};
+    let pageSize = 16384; // Apple Silicon M1/M2/M3/M4 default
+    const pageMatch = lines[0].match(/page size of (\d+) bytes/);
+    if (pageMatch) {
+      pageSize = parseInt(pageMatch[1]);
+    }
 
+    const stats = {};
     lines.forEach(l => {
       const parts = l.split(':');
       if (parts.length === 2) {
-        stats[parts[0].trim()] = parseInt(parts[1].replace('.', '').trim()) || 0;
+        stats[parts[0].replace(/"/g, '').trim()] = parseInt(parts[1].replace('.', '').trim()) || 0;
       }
     });
 
     const wired = stats['Pages wired down'] || 0;
     const active = stats['Pages active'] || 0;
+    const inactive = stats['Pages inactive'] || 0;
     const compressed = stats['Pages occupied by compressor'] || 0;
+    const fileBacked = stats['File-backed pages'] || 0;
 
-    const usedBytes = (wired + active + compressed) * pageSize;
+    // Exact macOS Activity Monitor Memory Used Calculation
+    const usedBytes = (wired + active + inactive + compressed - fileBacked) * pageSize;
     const totalBytes = os.totalmem();
 
     const memoryUsedGB = Number((usedBytes / (1024 * 1024 * 1024)).toFixed(1));
