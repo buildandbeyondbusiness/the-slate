@@ -2,24 +2,28 @@
  * The Slate — Production Mac Companion Agent
  * 
  * High-performance, zero-latency macOS native integration server.
- * Handles app launching, system macros, real-time hardware metrics,
- * and Apple Music / Spotify track reading.
+ * Reads Apple Music & Spotify, launches native Mac applications,
+ * and handles system macros.
  */
 
 const http = require('http');
 const { exec } = require('child_process');
 const os = require('os');
-const WebSocket = require('ws');
 const https = require('https');
 const url = require('url');
 
+let WebSocketServer = null;
+try {
+  WebSocketServer = require('ws').Server;
+} catch (e) {}
+
 const PORT = 3001;
 
+let lastCpuTimes = getCpuTimes();
 let cachedCpuUsage = 15;
 let cachedMediaState = null;
 let lastMediaFetchTime = 0;
 
-// Helper to get local Wi-Fi / Ethernet IP addresses
 function getLocalIPs() {
   const interfaces = os.networkInterfaces();
   const ips = [];
@@ -37,26 +41,34 @@ const localIps = getLocalIPs();
 const primaryIp = localIps[0] || 'localhost';
 
 console.log(`\n================================================================`);
-console.log(`  THE SLATE — MAC COMPANION AGENT (PRODUCTION VERSION)`);
+console.log(`  THE SLATE — MAC COMPANION AGENT (NATIVE MAC APPS READY)`);
 console.log(`================================================================`);
 console.log(` 📌 YOUR MAC IP ADDRESS:  ${primaryIp}`);
 console.log(` 📌 LOCAL TABLET WEB APP: http://${primaryIp}:3000`);
 console.log(` 📌 COMPANION API PORT:   http://${primaryIp}:${PORT}`);
-console.log(`----------------------------------------------------------------`);
-console.log(` Wi-Fi / USB Network IPs: ${localIps.join(', ')}`);
 console.log(`================================================================\n`);
 
-// Helper to execute shell command with 2.5s timeout
 function runCmd(cmd) {
   return new Promise((resolve) => {
-    exec(cmd, { timeout: 2500 }, (error, stdout) => {
+    exec(cmd, { timeout: 3000 }, (error, stdout) => {
       if (error) resolve('');
       else resolve(stdout ? stdout.trim() : '');
     });
   });
 }
 
-// Real macOS Memory Metrics via sysctl & os module
+function getCpuTimes() {
+  const cpus = os.cpus();
+  let user = 0, sys = 0, idle = 0, irq = 0;
+  cpus.forEach((cpu) => {
+    user += cpu.times.user;
+    sys += cpu.times.sys;
+    idle += cpu.times.idle;
+    irq += cpu.times.irq;
+  });
+  return { user, sys, idle, irq, total: user + sys + idle + irq };
+}
+
 function getRealMemoryMetrics() {
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
@@ -69,7 +81,6 @@ function getRealMemoryMetrics() {
   return { memoryUsedGB, memoryTotalGB, memoryPercentage };
 }
 
-// Real macOS Multi-Core CPU Usage Calculation
 async function updateRealCpuUsage() {
   try {
     const raw = await runCmd("ps -A -o %cpu | awk '{s+=$1} END {print s}'");
@@ -84,7 +95,6 @@ async function updateRealCpuUsage() {
 setInterval(updateRealCpuUsage, 2000);
 updateRealCpuUsage();
 
-// iTunes Search API Artwork Resolution Upgrade
 function fetchiTunesArtwork(trackName, artistName) {
   return new Promise((resolve) => {
     if (!trackName || trackName === 'No Active Playback') {
@@ -112,14 +122,50 @@ function fetchiTunesArtwork(trackName, artistName) {
   });
 }
 
-// REAL Media Reader (Spotify + Apple Music via AppleScript)
+// REAL Media Reader (Apple Music Priority)
 async function getRealMediaState() {
   const now = Date.now();
   if (cachedMediaState && (now - lastMediaFetchTime < 1000)) {
     return cachedMediaState;
   }
 
-  // 1. Spotify Check
+  // 1. Apple Music Check (Priority 1)
+  const musicRunning = await runCmd(`osascript -e 'if application "Music" is running then return "running"'`);
+  if (musicRunning === 'running') {
+    const script = `
+      tell application "Music"
+        set tName to name of current track
+        set tArtist to artist of current track
+        set tAlbum to album of current track
+        set pState to player state
+        set pPos to player position
+        set tDur to duration of current track
+        set sysVol to sound volume
+        return tName & "|||" & tArtist & "|||" & tAlbum & "|||" & pState & "|||" & pPos & "|||" & tDur & "|||" & sysVol
+      end tell
+    `;
+    const res = await runCmd(script);
+    if (res && res.includes('|||')) {
+      const [trackName, artist, album, pState, pPos, tDur, sysVol] = res.split('|||');
+      const artworkUrl = await fetchiTunesArtwork(trackName, artist);
+
+      cachedMediaState = {
+        trackName: trackName || 'Apple Music Track',
+        artist: artist || 'Apple Music Artist',
+        album: album || 'Apple Music Album',
+        albumArt: artworkUrl,
+        isPlaying: pState === 'playing',
+        durationSeconds: Math.round(parseFloat(tDur) || 180),
+        positionSeconds: Math.round(parseFloat(pPos) || 0),
+        volume: parseInt(sysVol) || 75,
+        sourceApp: 'Apple Music'
+      };
+      lastMediaFetchTime = now;
+      return cachedMediaState;
+    }
+  }
+
+  // 2. Spotify Check (Priority 2)
   const spotifyRunning = await runCmd(`osascript -e 'if application "Spotify" is running then return "running"'`);
   if (spotifyRunning === 'running') {
     const script = `
@@ -159,46 +205,10 @@ async function getRealMediaState() {
     }
   }
 
-  // 2. Apple Music Check
-  const musicRunning = await runCmd(`osascript -e 'if application "Music" is running then return "running"'`);
-  if (musicRunning === 'running') {
-    const script = `
-      tell application "Music"
-        set tName to name of current track
-        set tArtist to artist of current track
-        set tAlbum to album of current track
-        set pState to player state
-        set pPos to player position
-        set tDur to duration of current track
-        set sysVol to sound volume
-        return tName & "|||" & tArtist & "|||" & tAlbum & "|||" & pState & "|||" & pPos & "|||" & tDur & "|||" & sysVol
-      end tell
-    `;
-    const res = await runCmd(script);
-    if (res && res.includes('|||')) {
-      const [trackName, artist, album, pState, pPos, tDur, sysVol] = res.split('|||');
-      const artworkUrl = await fetchiTunesArtwork(trackName, artist);
-
-      cachedMediaState = {
-        trackName: trackName || 'Apple Music Track',
-        artist: artist || 'Apple Music Artist',
-        album: album || 'Apple Music Album',
-        albumArt: artworkUrl,
-        isPlaying: pState === 'playing',
-        durationSeconds: Math.round(parseFloat(tDur) || 180),
-        positionSeconds: Math.round(parseFloat(pPos) || 0),
-        volume: parseInt(sysVol) || 75,
-        sourceApp: 'Apple Music'
-      };
-      lastMediaFetchTime = now;
-      return cachedMediaState;
-    }
-  }
-
-  // 3. Fallback when no music player is active
+  // 3. Fallback when no active music player is running
   cachedMediaState = {
     trackName: 'No Active Playback',
-    artist: 'Open Spotify or Apple Music on Mac',
+    artist: 'Open Apple Music or Spotify on Mac',
     album: os.hostname(),
     albumArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80',
     isPlaying: false,
@@ -211,7 +221,6 @@ async function getRealMediaState() {
   return cachedMediaState;
 }
 
-// Get Full Mac Specs Payload
 async function getFullSpecs() {
   const mem = getRealMemoryMetrics();
   return {
@@ -225,7 +234,7 @@ async function getFullSpecs() {
   };
 }
 
-// Robust App Launching & Macro Action Handler
+// Native macOS Application Launching Engine
 async function handleAction(data) {
   console.log('[MacCompanion] Executing Action:', data);
   if (!data || !data.action) return;
@@ -233,44 +242,50 @@ async function handleAction(data) {
   if (data.action === 'LAUNCH_APP') {
     const target = (data.appName || '').trim();
 
-    if (target === 'LockMac') {
+    if (target === 'Music' || target === 'Apple Music') {
+      // Launch Apple Music Natively
+      runCmd(`open "/System/Applications/Music.app" || open -a "Music"`);
+    } else if (target === 'Antigravity') {
+      // Launch Native Antigravity App
+      runCmd(`open "/Applications/Antigravity.app" || open -a "Antigravity" || open -a "Google Antigravity"`);
+    } else if (target === 'WhatsApp') {
+      // Launch Native WhatsApp Desktop App
+      runCmd(`open -a "WhatsApp" || open "/Applications/WhatsApp.app" || open "/Applications/‎WhatsApp.app"`);
+    } else if (target === 'Visual Studio Code' || target === 'VS Code') {
+      // Launch Native VS Code
+      runCmd(`open "/Applications/Visual Studio Code.app" || open -a "Visual Studio Code" || open -a "Code"`);
+    } else if (target === 'GitHub' || target === 'GitHub Desktop') {
+      // Launch Native GitHub Desktop App
+      runCmd(`open -a "GitHub Desktop" || open "/Applications/GitHub Desktop.app" || open "https://github.com"`);
+    } else if (target === 'Gemini') {
+      // Open Gemini AI Web Portal
+      runCmd(`open "https://gemini.google.com"`);
+    } else if (target === 'LockMac') {
       runCmd(`pmset displaysleepnow`);
     } else if (target === 'MuteMac') {
       runCmd(`osascript -e "set volume output volume 0"`);
     } else if (target === 'Screenshot') {
       runCmd(`screencapture -c -P`);
-    } else if (target === 'Gemini') {
-      runCmd(`open "https://gemini.google.com"`);
-    } else if (target === 'GitHub') {
-      runCmd(`open -a "GitHub Desktop" || open "https://github.com"`);
-    } else if (target === 'Antigravity') {
-      runCmd(`open -a "Antigravity" || open -a "Google Antigravity" || open -a "Visual Studio Code" || open "https://antigravity.google"`);
-    } else if (target === 'Music') {
-      runCmd(`open -a "Spotify" || open -a "Music"`);
-    } else if (target === 'WhatsApp') {
-      runCmd(`open -a "WhatsApp" || open "https://web.whatsapp.com"`);
-    } else if (target === 'Visual Studio Code' || target === 'VS Code') {
-      runCmd(`open -a "Visual Studio Code" || open -a "Code"`);
     } else {
-      // General app launch with fallback to web search if not found
-      runCmd(`open -a "${target}" || open "https://www.google.com/search?q=${encodeURIComponent(target)}"`);
+      runCmd(`open -a "${target}"`);
     }
   } else if (data.action === 'MEDIA_PLAY_PAUSE') {
-    runCmd(`osascript -e 'tell application "Spotify" to playpause' || osascript -e 'tell application "Music" to playpause'`);
+    // Control Apple Music Priority, then Spotify
+    runCmd(`osascript -e 'tell application "Music" to playpause' || osascript -e 'tell application "Spotify" to playpause'`);
   } else if (data.action === 'MEDIA_NEXT') {
-    runCmd(`osascript -e 'tell application "Spotify" to next track' || osascript -e 'tell application "Music" to next track'`);
+    runCmd(`osascript -e 'tell application "Music" to next track' || osascript -e 'tell application "Spotify" to next track'`);
   } else if (data.action === 'MEDIA_PREV') {
-    runCmd(`osascript -e 'tell application "Spotify" to previous track' || osascript -e 'tell application "Music" to previous track'`);
+    runCmd(`osascript -e 'tell application "Music" to previous track' || osascript -e 'tell application "Spotify" to previous track'`);
   } else if (data.action === 'SET_VOLUME') {
     const vol = Math.max(0, Math.min(100, data.volume || 50));
     runCmd(`osascript -e 'set volume output volume ${vol}'`);
   } else if (data.action === 'SEEK_MEDIA') {
     const pos = data.position || 0;
-    runCmd(`osascript -e 'tell application "Spotify" to set player position to ${pos}' || osascript -e 'tell application "Music" to set player position to ${pos}'`);
+    runCmd(`osascript -e 'tell application "Music" to set player position to ${pos}' || osascript -e 'tell application "Spotify" to set player position to ${pos}'`);
   }
 }
 
-// HTTP REST API Server
+// Built-in HTTP REST API Server
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -332,49 +347,15 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// WebSocket Server
-const wss = new WebSocket.Server({ server });
-
-wss.on('connection', (ws) => {
-  console.log('[MacCompanion] WebSocket Client Connected!');
-  sendMetrics(ws);
-
-  ws.on('message', async (message) => {
-    try {
-      const data = JSON.parse(message);
-      await handleAction(data);
-    } catch (err) {
-      console.error('[MacCompanion] WS Error:', err);
-    }
-  });
-});
-
-async function sendMetrics(wsClient) {
-  const specs = await getFullSpecs();
-  const media = await getRealMediaState();
-
-  const specsPayload = { type: 'SYSTEM_SPECS', payload: specs };
-  const mediaPayload = { type: 'MEDIA_STATE', payload: media };
-
-  if (wsClient && wsClient.readyState === WebSocket.OPEN) {
-    wsClient.send(JSON.stringify(specsPayload));
-    wsClient.send(JSON.stringify(mediaPayload));
-  } else {
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(specsPayload));
-        client.send(JSON.stringify(mediaPayload));
-      }
+if (WebSocketServer) {
+  try {
+    const wss = new WebSocketServer({ server });
+    wss.on('connection', (ws) => {
+      console.log('[MacCompanion] WebSocket Connected');
     });
-  }
+  } catch (err) {}
 }
 
-setInterval(() => {
-  if (wss.clients.size > 0) {
-    sendMetrics();
-  }
-}, 1200);
-
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Companion Server listening on all network interfaces on port ${PORT}`);
+  console.log(`Companion Server listening on 0.0.0.0:${PORT}`);
 });
