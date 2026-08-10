@@ -2,9 +2,8 @@
  * The Slate — Production Mac Companion Agent
  * 
  * High-performance, zero-latency macOS native integration server.
- * - Instant Apple Music & Spotify Real-Time Sync Engine (<10ms response)
- * - Non-blocking iTunes Artwork Cache
- * - Interactive Screenshot Selection Menu (screencapture -i -c)
+ * - Native macOS Screenshot Utility App Launcher (open "/System/Applications/Utilities/Screenshot.app")
+ * - Instant Apple Music & Spotify Real-Time Sync Engine
  * - Mute / Unmute Toggle Logic
  * - Native Mac App Launchers
  */
@@ -46,7 +45,7 @@ const localIps = getLocalIPs();
 const primaryIp = localIps[0] || 'localhost';
 
 console.log(`\n================================================================`);
-console.log(`  THE SLATE — MAC COMPANION AGENT (MUSIC SYNC FAST ENGINE)`);
+console.log(`  THE SLATE — MAC COMPANION AGENT (CONTROL CENTER SCREENSHOT)`);
 console.log(`================================================================`);
 console.log(` 📌 YOUR MAC IP ADDRESS:  ${primaryIp}`);
 console.log(` 📌 LOCAL TABLET WEB APP: http://${primaryIp}:3000`);
@@ -100,7 +99,6 @@ async function updateRealCpuUsage() {
 setInterval(updateRealCpuUsage, 2000);
 updateRealCpuUsage();
 
-// Non-blocking iTunes Artwork Fetcher
 function getArtworkFast(trackName, artistName) {
   const defaultArt = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80';
   if (!trackName || trackName === 'No Active Playback') return defaultArt;
@@ -110,7 +108,6 @@ function getArtworkFast(trackName, artistName) {
     return artworkCache.get(cacheKey);
   }
 
-  // Set placeholder immediately and fetch high-res in background
   artworkCache.set(cacheKey, defaultArt);
 
   const query = encodeURIComponent(`${trackName} ${artistName}`);
@@ -133,7 +130,6 @@ function getArtworkFast(trackName, artistName) {
   return defaultArt;
 }
 
-// Instant Media Reader for Apple Music & Spotify
 async function getRealMediaState() {
   const now = Date.now();
   if (cachedMediaState && (now - lastMediaFetchTime < 600)) {
@@ -258,7 +254,7 @@ async function getFullSpecs() {
 }
 
 async function handleAction(data) {
-  console.log('[MacCompanion] Action:', data);
+  console.log('[MacCompanion] Executing Action:', data);
   if (!data || !data.action) return;
 
   if (data.action === 'LAUNCH_APP') {
@@ -292,7 +288,8 @@ async function handleAction(data) {
       const restoreVol = lastMutedVolume > 0 ? lastMutedVolume : 75;
       runCmd(`osascript -e "set volume output volume ${restoreVol}"`);
     } else if (target === 'Screenshot') {
-      runCmd(`screencapture -i -c || open -a "Screenshot"`);
+      // Launch Native macOS Control Center / Cmd+Shift+5 Screenshot Utility App!
+      runCmd(`open "/System/Applications/Utilities/Screenshot.app" || open -a "Screenshot" || screencapture -ui`);
     } else {
       runCmd(`open -a "${target}"`);
     }
