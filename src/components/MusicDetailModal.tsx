@@ -1,5 +1,19 @@
-import React from 'react';
-import { X, Play, Pause, SkipBack, SkipForward, Volume2, Disc, Activity } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  ChevronLeft, 
+  Play, 
+  Pause, 
+  SkipBack, 
+  SkipForward, 
+  Shuffle, 
+  Repeat, 
+  MoreHorizontal, 
+  Map, 
+  Music as MusicIcon, 
+  MessageSquare, 
+  Grid,
+  ListMusic
+} from 'lucide-react';
 import { MediaTrackState } from '../types';
 
 interface MusicDetailModalProps {
@@ -21,142 +35,280 @@ export const MusicDetailModal: React.FC<MusicDetailModalProps> = ({
   onNextTrack,
   onPrevTrack,
   onSeek,
-  onVolumeChange,
 }) => {
   if (!isOpen) return null;
 
-  const formatTime = (sec: number) => {
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
+
+  const formatElapsed = (sec: number) => {
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     return `${m}:${String(s).padStart(2, '0')}`;
   };
 
+  const formatRemaining = (sec: number, total: number) => {
+    const rem = Math.max(0, total - sec);
+    const m = Math.floor(rem / 60);
+    const s = Math.floor(rem % 60);
+    return `-${m}:${String(s).padStart(2, '0')}`;
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-2xl flex items-center justify-center p-6 animate-in fade-in duration-300">
+    <div className="modal-overlay" style={{ padding: 0, background: '#000000' }}>
       
-      {/* Album Artwork Ambient Backdrop Glow */}
+      {/* Dynamic Album Art Ambient Background Illumination */}
       <div 
-        className="absolute inset-0 opacity-40 filter blur-[120px] pointer-events-none transition-all duration-700"
         style={{
+          position: 'absolute',
+          inset: 0,
           backgroundImage: `url(${mediaState.albumArt})`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundPosition: 'center',
+          filter: 'blur(80px) brightness(0.45) saturate(160%)',
+          transform: 'scale(1.2)',
+          transition: 'all 0.8s ease'
         }}
       />
 
-      <div className="relative w-full max-w-4xl glass-card p-8 bg-black/40 border border-white/20 shadow-2xl flex flex-col md:flex-row items-center gap-8 z-10">
-        
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2.5 rounded-full glass-pill hover:bg-white/20 text-slate-300 hover:text-white transition"
+      {/* Main CarPlay Screen Container */}
+      <div 
+        style={{
+          position: 'relative',
+          width: '100vw',
+          height: '100vh',
+          display: 'flex',
+          zIndex: 10,
+          overflow: 'hidden',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Outfit", sans-serif'
+        }}
+      >
+        {/* ======================================================== */}
+        {/* LEFT PERSISTENT CARPLAY SIDEBAR DOCK                    */}
+        {/* ======================================================== */}
+        <div 
+          style={{
+            width: '72px',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(30px)',
+            WebkitBackdropFilter: 'blur(30px)',
+            borderRight: '1px solid rgba(255, 255, 255, 0.12)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px 0',
+            zIndex: 20
+          }}
         >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Left: Large Album Art */}
-        <div className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-3xl overflow-hidden shadow-2xl border border-white/20 flex-shrink-0 group">
-          <img
-            src={mediaState.albumArt}
-            alt={mediaState.trackName}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-          />
-          {mediaState.isPlaying && (
-            <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] flex items-center justify-center">
-              <Disc className="w-16 h-16 text-white/80 animate-spin" style={{ animationDuration: '6s' }} />
-            </div>
-          )}
-        </div>
-
-        {/* Right: Info, Lyrics Preview, Controls */}
-        <div className="flex-1 w-full flex flex-col justify-between space-y-6">
-          <div>
-            <span className="text-xs font-bold tracking-widest text-rose-400 uppercase bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/30">
-              Apple Music Lyrics & Controller
-            </span>
-
-            <h1 className="text-3xl font-extrabold text-white mt-3 tracking-tight">
-              {mediaState.trackName}
-            </h1>
-            <p className="text-lg text-slate-300 font-medium mt-1">
-              {mediaState.artist} — <span className="text-slate-400">{mediaState.album}</span>
-            </p>
+          {/* Status Top */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff' }}>3:57</span>
+            <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.5px' }}>LTE</span>
           </div>
 
-          {/* Simulated Animated Lyrics / Audio Visualizer Bars */}
-          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center gap-1.5 h-16 overflow-hidden">
-            {[40, 70, 35, 90, 60, 100, 45, 80, 55, 30, 85, 95, 50, 75, 40, 60].map((h, i) => (
-              <div
-                key={i}
-                className="w-1.5 bg-gradient-to-t from-rose-500 to-sky-400 rounded-full transition-all duration-300"
+          {/* Quick App Icons Stack */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+            {/* Maps Icon */}
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #38bdf8, #0284c7)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', cursor: 'pointer' }}>
+              <Map style={{ width: '22px', height: '22px', color: '#ffffff' }} />
+            </div>
+
+            {/* Apple Music Icon (Active) */}
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #f43f5e, #e11d48)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(244, 63, 94, 0.5)', cursor: 'pointer' }}>
+              <MusicIcon style={{ width: '22px', height: '22px', color: '#ffffff' }} />
+            </div>
+
+            {/* Messages Icon */}
+            <div style={{ position: 'relative', width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', cursor: 'pointer' }}>
+              <MessageSquare style={{ width: '22px', height: '22px', color: '#ffffff' }} />
+              <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444', border: '2px solid #000000' }} />
+            </div>
+          </div>
+
+          {/* Bottom Grid Button */}
+          <button 
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', padding: '8px', borderRadius: '50%', transition: 'all 0.2s' }}
+            title="Return to Standby Dashboard"
+          >
+            <Grid style={{ width: '24px', height: '24px' }} />
+          </button>
+        </div>
+
+        {/* ======================================================== */}
+        {/* MAIN CARPLAY NOW PLAYING SCREEN                          */}
+        {/* ======================================================== */}
+        <div 
+          style={{
+            flex: 1,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: '24px 36px',
+            position: 'relative'
+          }}
+        >
+          {/* Top Header Bar: < Back  ... Up Next */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <button
+              onClick={onClose}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'rgba(56, 189, 248, 0.2)',
+                border: 'none',
+                color: '#38bdf8',
+                padding: '6px 16px',
+                borderRadius: '9999px',
+                fontSize: '1rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <ChevronLeft style={{ width: '20px', height: '20px' }} />
+              <span>Back</span>
+            </button>
+
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                color: '#38bdf8',
+                fontSize: '1rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <ListMusic style={{ width: '18px', height: '18px' }} />
+              <span>Up Next</span>
+            </button>
+          </div>
+
+          {/* Center Main Content: Left Details & Controls + Right Album Art */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '36px', alignItems: 'center', flex: 1, margin: '16px 0' }}>
+            
+            {/* Left Column: Track Info, Playback Controls, Timeline & Options */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', padding: '8px 0' }}>
+              
+              {/* Titles */}
+              <div>
+                <h1 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '-0.5px', margin: 0, lineHeight: 1.2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {mediaState.trackName}
+                </h1>
+                <p style={{ fontSize: '1.1rem', fontWeight: 600, color: '#38bdf8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {mediaState.artist} — {mediaState.album}
+                </p>
+              </div>
+
+              {/* Large CarPlay Playback Controls (Rewind, Play/Pause, Fast Forward) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '32px', margin: '20px 0' }}>
+                <button
+                  onClick={onPrevTrack}
+                  style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '8px', transition: 'transform 0.15s' }}
+                  title="Rewind / Previous"
+                >
+                  <SkipBack style={{ width: '40px', height: '40px', fill: '#ffffff' }} />
+                </button>
+
+                <button
+                  onClick={onTogglePlayPause}
+                  style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '8px', transition: 'transform 0.15s' }}
+                  title={mediaState.isPlaying ? 'Pause' : 'Play'}
+                >
+                  {mediaState.isPlaying ? (
+                    <Pause style={{ width: '48px', height: '48px', fill: '#ffffff' }} />
+                  ) : (
+                    <Play style={{ width: '48px', height: '48px', fill: '#ffffff', marginLeft: '4px' }} />
+                  )}
+                </button>
+
+                <button
+                  onClick={onNextTrack}
+                  style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '8px', transition: 'transform 0.15s' }}
+                  title="Fast Forward / Next"
+                >
+                  <SkipForward style={{ width: '40px', height: '40px', fill: '#ffffff' }} />
+                </button>
+              </div>
+
+              {/* Timeline Seekbar & Timestamps */}
+              <div>
+                <input
+                  type="range"
+                  min="0"
+                  max={mediaState.durationSeconds || 180}
+                  value={mediaState.positionSeconds || 0}
+                  onChange={(e) => onSeek(Number(e.target.value))}
+                  style={{
+                    width: '100%',
+                    WebkitAppearance: 'none',
+                    height: '4px',
+                    borderRadius: '9999px',
+                    background: 'rgba(255, 255, 255, 0.3)',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8', marginTop: '6px', fontFamily: 'monospace' }}>
+                  <span>{formatElapsed(mediaState.positionSeconds)}</span>
+                  <span>{formatRemaining(mediaState.positionSeconds, mediaState.durationSeconds)}</span>
+                </div>
+              </div>
+
+              {/* Bottom Action Row: Shuffle | Ellipsis | Repeat */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginTop: '12px' }}>
+                <button
+                  onClick={() => setIsShuffle(!isShuffle)}
+                  style={{ background: 'none', border: 'none', color: isShuffle ? '#38bdf8' : '#94a3b8', cursor: 'pointer', padding: '8px' }}
+                >
+                  <Shuffle style={{ width: '22px', height: '22px' }} />
+                </button>
+
+                <button style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '8px' }}>
+                  <MoreHorizontal style={{ width: '24px', height: '24px' }} />
+                </button>
+
+                <button
+                  onClick={() => setIsRepeat(!isRepeat)}
+                  style={{ background: 'none', border: 'none', color: isRepeat ? '#38bdf8' : '#94a3b8', cursor: 'pointer', padding: '8px' }}
+                >
+                  <Repeat style={{ width: '22px', height: '22px' }} />
+                </button>
+              </div>
+
+            </div>
+
+            {/* Right Column: Album Artwork Card */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+              <div 
                 style={{
-                  height: mediaState.isPlaying ? `${Math.min(100, Math.max(15, h * (0.6 + Math.random() * 0.5)))}%` : '15%'
+                  width: '280px',
+                  height: '280px',
+                  borderRadius: '24px',
+                  overflow: 'hidden',
+                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.15)',
+                  flexShrink: 0
                 }}
-              />
-            ))}
-          </div>
-
-          {/* Timeline Seekbar */}
-          <div className="space-y-1">
-            <input
-              type="range"
-              min="0"
-              max={mediaState.durationSeconds || 180}
-              value={mediaState.positionSeconds || 0}
-              onChange={(e) => onSeek(Number(e.target.value))}
-              className="w-full accent-rose-400 cursor-pointer"
-            />
-            <div className="flex justify-between text-xs font-mono text-slate-400">
-              <span>{formatTime(mediaState.positionSeconds)}</span>
-              <span>{formatTime(mediaState.durationSeconds)}</span>
-            </div>
-          </div>
-
-          {/* Playback Controls & Volume */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-6">
-              <button
-                onClick={onPrevTrack}
-                className="p-3 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition active:scale-90"
               >
-                <SkipBack className="w-6 h-6" />
-              </button>
-
-              <button
-                onClick={onTogglePlayPause}
-                className="p-4 rounded-full bg-rose-500 hover:bg-rose-400 text-white shadow-xl shadow-rose-500/40 transition active:scale-95"
-              >
-                {mediaState.isPlaying ? (
-                  <Pause className="w-6 h-6 fill-current" />
-                ) : (
-                  <Play className="w-6 h-6 fill-current ml-0.5" />
-                )}
-              </button>
-
-              <button
-                onClick={onNextTrack}
-                className="p-3 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition active:scale-90"
-              >
-                <SkipForward className="w-6 h-6" />
-              </button>
+                <img
+                  src={mediaState.albumArt}
+                  alt={mediaState.trackName}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
             </div>
 
-            {/* Volume Control */}
-            <div className="flex items-center gap-3 w-40">
-              <Volume2 className="w-4 h-4 text-slate-400" />
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={mediaState.volume}
-                onChange={(e) => onVolumeChange(Number(e.target.value))}
-                className="w-full accent-sky-400"
-              />
-            </div>
           </div>
 
         </div>
-
       </div>
     </div>
   );
