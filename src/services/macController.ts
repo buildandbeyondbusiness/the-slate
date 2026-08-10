@@ -18,7 +18,7 @@ class MacControllerService {
 
   private mediaState: MediaTrackState = {
     trackName: 'Waiting for Mac Connection...',
-    artist: 'Open http://<mac-ip>:3000 on tablet',
+    artist: 'Plug USB Cable or Connect Wi-Fi',
     album: 'Mac Integration',
     albumArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80',
     isPlaying: false,
@@ -72,14 +72,14 @@ class MacControllerService {
       try { this.ws.close(); } catch (e) {}
     }
 
-    // Determine protocol: if page is HTTP, use ws://. If HTTPS, ws:// will be blocked by Mixed Content.
     const wsUrl = `ws://${this.macIp}:${this.port}`;
     try {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
         console.log('[MacController] Connected via WebSocket');
-        this.setConnectedState(true, `Connected to Mac (${this.macIp})`);
+        const connType = (this.macIp === 'localhost' || this.macIp === '127.0.0.1') ? 'USB Cable' : 'Wi-Fi Network';
+        this.setConnectedState(true, `Connected to Mac via ${connType}!`);
       };
 
       this.ws.onmessage = (event) => {
@@ -125,7 +125,8 @@ class MacControllerService {
         if (data.systemSpecs && data.mediaState) {
           this.systemSpecs = { ...data.systemSpecs, isConnected: true };
           this.mediaState = { ...data.mediaState };
-          this.setConnectedState(true, `Connected to Mac (${this.macIp})`);
+          const connType = (this.macIp === 'localhost' || this.macIp === '127.0.0.1') ? 'USB Cable' : 'Wi-Fi Network';
+          this.setConnectedState(true, `Connected to Mac via ${connType}!`);
           this.notifySpecs();
           this.notifyMedia();
           return;
@@ -133,9 +134,8 @@ class MacControllerService {
       }
     } catch (err) {}
 
-    // Check if HTTPS Mixed Content is blocking the connection
     if (window.location.protocol === 'https:') {
-      this.notifyToast(`💡 HTTPS Security Notice: Open http://${this.macIp || '192.168.0.110'}:3000 on tablet for instant connection!`);
+      this.notifyToast(`💡 Plug USB Cable & open http://localhost:3000 on tablet!`);
     } else if (this.isConnected) {
       this.notifyToast(`Disconnected from Mac (${this.macIp}). Retrying...`);
     }
@@ -180,7 +180,7 @@ class MacControllerService {
         body: JSON.stringify(payload)
       });
     } catch (e) {
-      this.notifyToast(`Failed to send action. Open http://${this.macIp}:3000 on tablet.`);
+      this.notifyToast(`Failed to send action. Open http://localhost:3000 on tablet over USB.`);
     }
   }
 

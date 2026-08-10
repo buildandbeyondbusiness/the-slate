@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ================================================================
-#   The Slate — One-Click Mac Server & Web App Launcher
+#   The Slate — USB Cable & Wi-Fi Mac Server Launcher
 # ================================================================
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -13,14 +13,27 @@ echo "  STARTING THE SLATE MAC SERVER & LOCAL WEB APP"
 echo "================================================================"
 echo ""
 
-# Get primary local IP
+# Enable USB Cable Port Forwarding via ADB if Samsung Tab is plugged in
+if command -v adb &> /dev/null; then
+    echo "🔌 Setting up USB Cable port forwarding via ADB..."
+    adb reverse tcp:3000 tcp:3000 2>/dev/null
+    adb reverse tcp:3001 tcp:3001 2>/dev/null
+    if [ $? -eq 0 ]; then
+        echo " SUCCESS: USB Cable Connection Active!"
+        echo " 📌 USB CABLE TABLET URL:  http://localhost:3000"
+    fi
+    echo "----------------------------------------------------------------"
+fi
+
+# Get primary Wi-Fi IP as fallback
 IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1 || echo "localhost")
 
-echo " 📌 YOUR TABLET URL:       http://${IP}:3000"
+echo " 📌 WI-FI TABLET URL:       http://${IP}:3000"
 echo " 📌 MAC COMPANION PORT:    http://${IP}:3001"
-echo "----------------------------------------------------------------"
-echo " Open http://${IP}:3000 on your Samsung Tab for 100% instant"
-echo " WebSocket connection with ZERO browser security blocks!"
+echo "================================================================"
+echo " 💡 USB CABLE CONNECTION INSTRUCTIONS:"
+echo " 1. Connect Samsung Tab to Mac using USB Cable."
+echo " 2. Open Chrome on Tab & go to: http://localhost:3000"
 echo "================================================================"
 echo ""
 
