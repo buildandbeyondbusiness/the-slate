@@ -1,13 +1,10 @@
 /**
  * The Slate — High-Performance Mac Companion Agent
  * 
- * Ultra-lightweight native Node.js WebSocket server for macOS.
- * - CPU usage: < 0.2%
- * - Memory usage: ~14 MB
- * - Auto-pauses polling when no tablet is connected.
- * - Reads REAL Spotify & Apple Music playing tracks, album art, position, volume.
- * - Reads REAL Mac hardware metrics (CPU, Memory, GPU, Hostname).
- * - Launches REAL Mac applications (`open -a`).
+ * Multi-protocol Local Mac Integration:
+ * - WebSocket Server (port 3001)
+ * - HTTP REST API Server (with CORS enabled for HTTPS web apps)
+ * - Zero-CPU Idle Polling
  */
 
 const http = require('http');
@@ -18,41 +15,11 @@ const https = require('https');
 
 const PORT = 3001;
 
-// HTTP Server for health check & IP discovery
-const server = http.createServer((req, res) => {
-  res.writeHead(200, {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
-  });
-  
-  if (req.url === '/ping' || req.url === '/') {
-    res.end(JSON.stringify({
-      status: 'online',
-      macName: os.hostname(),
-      platform: os.platform(),
-      arch: os.arch(),
-      version: '1.0.0'
-    }));
-  } else {
-    res.end(JSON.stringify({ status: 'active' }));
-  }
-});
-
-const wss = new WebSocket.Server({ server });
-
 let lastCpuTimes = getCpuTimes();
 let cachedMediaState = null;
 let lastMediaFetchTime = 0;
 
-console.log(`\n================================================================`);
-console.log(`  THE SLATE — MAC COMPANION SERVER (REAL MAC INTEGRATION)`);
-console.log(`   Status: RUNNING & OPTIMIZED`);
-console.log(`   Port:   http://localhost:${PORT}`);
-console.log(`   Local IPs: ${getLocalIPs().join(', ')}`);
-console.log(`================================================================\n`);
-
-// Get all Local Wi-Fi / Ethernet IP addresses for automatic tab connection
+// Helper to get local Wi-Fi / Ethernet IP
 function getLocalIPs() {
   const interfaces = os.networkInterfaces();
   const ips = [];
@@ -66,6 +33,62 @@ function getLocalIPs() {
   return ips;
 }
 
+const localIps = getLocalIPs();
+const primaryIp = localIps[0] || 'localhost';
+
+console.log(`\n================================================================`);
+console.log(`  THE SLATE — MAC COMPANION SERVER IS READY!`);
+console.log(`----------------------------------------------------------------`);
+console.log(` 📌 YOUR MAC IP ADDRESS:  ${primaryIp}`);
+console.log(` 📌 ENTER THIS IN SETTINGS ON YOUR TAB:  http://${primaryIp}:${PORT}`);
+console.log(`----------------------------------------------------------------`);
+console.log(` Available local network IPs: ${localIps.join(', ')}`);
+console.log(`================================================================\n`);
+
+// HTTP Server handling REST API + CORS + WebSockets
+const server = http.createServer(async (req, res) => {
+  // CORS Headers for browser cross-origin requests
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  if (req.url === '/api/state' || req.url === '/ping' || req.url === '/') {
+    const specs = await getFullSpecs();
+    const media = await getRealMediaState();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'online',
+      systemSpecs: specs,
+      mediaState: media
+    }));
+  } else if (req.url === '/api/action' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const data = JSON.parse(body);
+        await handleAction(data);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'success' }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'error', error: err.message }));
+      }
+    });
+  } else {
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'not_found' }));
+  }
+});
+
+const wss = new WebSocket.Server({ server });
+
 // Execute Shell Command Promise
 function runCmd(cmd) {
   return new Promise((resolve) => {
@@ -76,7 +99,6 @@ function runCmd(cmd) {
   });
 }
 
-// Calculate Real Delta CPU Usage %
 function getCpuTimes() {
   const cpus = os.cpus();
   let user = 0, sys = 0, idle = 0, irq = 0;
@@ -100,7 +122,6 @@ function calculateCpuUsage() {
   return Math.max(0, Math.min(100, usage));
 }
 
-// Get Real Memory Metrics
 function getMemoryMetrics() {
   const total = os.totalmem();
   const free = os.freemem();
@@ -112,7 +133,20 @@ function getMemoryMetrics() {
   return { memoryUsedGB, memoryTotalGB, memoryPercentage };
 }
 
-// Fetch Album Art via iTunes Search API if Apple Music image is missing
+async function getFullSpecs() {
+  const cpuUsage = calculateCpuUsage();
+  const mem = getMemoryMetrics();
+  return {
+    cpuUsage,
+    gpuUsage: Math.round(cpuUsage * 0.65),
+    memoryUsedGB: mem.memoryUsedGB,
+    memoryTotalGB: mem.memoryTotalGB,
+    memoryPercentage: mem.memoryPercentage,
+    macName: os.hostname() || 'MacBook Pro',
+    isConnected: true
+  };
+}
+
 function fetchiTunesArtwork(trackName, artistName) {
   return new Promise((resolve) => {
     if (!trackName || trackName === 'No Active Playback') {
@@ -128,7 +162,6 @@ function fetchiTunesArtwork(trackName, artistName) {
         try {
           const json = JSON.parse(data);
           if (json.results && json.results.length > 0 && json.results[0].artworkUrl100) {
-            // Upgrade artwork resolution from 100x100 to 600x600
             const highRes = json.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
             return resolve(highRes);
           }
@@ -141,10 +174,8 @@ function fetchiTunesArtwork(trackName, artistName) {
   });
 }
 
-// REAL Media Reader (Spotify + Apple Music via AppleScript)
 async function getRealMediaState() {
   const now = Date.now();
-  // Cache for 800ms to keep CPU minimal
   if (cachedMediaState && (now - lastMediaFetchTime < 800)) {
     return cachedMediaState;
   }
@@ -168,7 +199,6 @@ async function getRealMediaState() {
     const result = await runCmd(script);
     if (result && result.includes('|||')) {
       const [trackName, artist, album, albumArt, pState, pPos, tDur, sysVol] = result.split('|||');
-      
       let artworkUrl = albumArt;
       if (!artworkUrl || !artworkUrl.startsWith('http')) {
         artworkUrl = await fetchiTunesArtwork(trackName, artist);
@@ -226,7 +256,7 @@ async function getRealMediaState() {
     }
   }
 
-  // 3. Fallback when no active music player is playing
+  // 3. Fallback
   cachedMediaState = {
     trackName: 'No Active Playback',
     artist: 'Open Spotify or Apple Music on Mac',
@@ -242,80 +272,59 @@ async function getRealMediaState() {
   return cachedMediaState;
 }
 
-// WebSocket Connection Manager
-wss.on('connection', (ws) => {
-  console.log('[MacCompanion] Samsung Tab Connected!');
+async function handleAction(data) {
+  console.log('[MacCompanion] Action:', data);
+  if (data.action === 'LAUNCH_APP') {
+    const appName = data.appName;
+    if (appName === 'LockMac') {
+      runCmd(`pmset displaysleepnow`);
+    } else if (appName === 'MuteMic') {
+      runCmd(`osascript -e "set volume input volume 0"`);
+    } else if (appName === 'LaunchDev') {
+      runCmd(`open -a "Visual Studio Code" && open -a "Terminal"`);
+    } else {
+      runCmd(`open -a "${appName}"`);
+    }
+  } else if (data.action === 'MEDIA_PLAY_PAUSE') {
+    runCmd(`osascript -e 'tell application "Spotify" to playpause' || osascript -e 'tell application "Music" to playpause'`);
+  } else if (data.action === 'MEDIA_NEXT') {
+    runCmd(`osascript -e 'tell application "Spotify" to next track' || osascript -e 'tell application "Music" to next track'`);
+  } else if (data.action === 'MEDIA_PREV') {
+    runCmd(`osascript -e 'tell application "Spotify" to previous track' || osascript -e 'tell application "Music" to previous track'`);
+  } else if (data.action === 'SET_VOLUME') {
+    const vol = Math.max(0, Math.min(100, data.volume || 50));
+    runCmd(`osascript -e 'set volume output volume ${vol}'`);
+  } else if (data.action === 'SEEK_MEDIA') {
+    const pos = data.position || 0;
+    runCmd(`osascript -e 'tell application "Spotify" to set player position to ${pos}' || osascript -e 'tell application "Music" to set player position to ${pos}'`);
+  }
+}
 
-  // Send real data immediately
+wss.on('connection', (ws) => {
+  console.log('[MacCompanion] WebSocket Client Connected!');
   sendMetrics(ws);
 
   ws.on('message', async (message) => {
     try {
       const data = JSON.parse(message);
-      console.log('[MacCompanion] Received Action:', data);
-
-      if (data.action === 'LAUNCH_APP') {
-        const appName = data.appName;
-        if (appName === 'LockMac') {
-          runCmd(`pmset displaysleepnow`);
-        } else if (appName === 'MuteMic') {
-          runCmd(`osascript -e "set volume input volume 0"`);
-        } else if (appName === 'LaunchDev') {
-          runCmd(`open -a "Visual Studio Code" && open -a "Terminal"`);
-        } else {
-          runCmd(`open -a "${appName}"`);
-        }
-      } else if (data.action === 'MEDIA_PLAY_PAUSE') {
-        runCmd(`osascript -e 'tell application "Spotify" to playpause' || osascript -e 'tell application "Music" to playpause'`);
-      } else if (data.action === 'MEDIA_NEXT') {
-        runCmd(`osascript -e 'tell application "Spotify" to next track' || osascript -e 'tell application "Music" to next track'`);
-      } else if (data.action === 'MEDIA_PREV') {
-        runCmd(`osascript -e 'tell application "Spotify" to previous track' || osascript -e 'tell application "Music" to previous track'`);
-      } else if (data.action === 'SET_VOLUME') {
-        const vol = Math.max(0, Math.min(100, data.volume || 50));
-        runCmd(`osascript -e 'set volume output volume ${vol}'`);
-      } else if (data.action === 'SEEK_MEDIA') {
-        const pos = data.position || 0;
-        runCmd(`osascript -e 'tell application "Spotify" to set player position to ${pos}' || osascript -e 'tell application "Music" to set player position to ${pos}'`);
-      }
+      await handleAction(data);
     } catch (err) {
-      console.error('[MacCompanion] Error handling action:', err);
+      console.error('[MacCompanion] WS Message Error:', err);
     }
-  });
-
-  ws.on('close', () => {
-    console.log('[MacCompanion] Samsung Tab Disconnected');
   });
 });
 
 async function sendMetrics(wsClient) {
-  const cpuUsage = calculateCpuUsage();
-  const mem = getMemoryMetrics();
+  const specs = await getFullSpecs();
   const media = await getRealMediaState();
 
-  const specsPayload = {
-    type: 'SYSTEM_SPECS',
-    payload: {
-      cpuUsage,
-      gpuUsage: Math.round(cpuUsage * 0.65), // Dynamic GPU load estimate
-      memoryUsedGB: mem.memoryUsedGB,
-      memoryTotalGB: mem.memoryTotalGB,
-      memoryPercentage: mem.memoryPercentage,
-      macName: os.hostname() || 'MacBook Pro',
-      isConnected: true
-    }
-  };
-
-  const mediaPayload = {
-    type: 'MEDIA_STATE',
-    payload: media
-  };
+  const specsPayload = { type: 'SYSTEM_SPECS', payload: specs };
+  const mediaPayload = { type: 'MEDIA_STATE', payload: media };
 
   if (wsClient && wsClient.readyState === WebSocket.OPEN) {
     wsClient.send(JSON.stringify(specsPayload));
     wsClient.send(JSON.stringify(mediaPayload));
   } else {
-    // Broadcast to all connected tablets
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(specsPayload));
@@ -325,7 +334,7 @@ async function sendMetrics(wsClient) {
   }
 }
 
-// SMART POLLING: Broadcast every 1.2s ONLY when clients are connected!
+// Broadcast loop every 1.2s when clients are connected
 setInterval(() => {
   if (wss.clients.size > 0) {
     sendMetrics();
@@ -333,5 +342,5 @@ setInterval(() => {
 }, 1200);
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\nReady for incoming Samsung Tab WebSocket connections on port ${PORT}\n`);
+  console.log(`Server running on all interfaces on port ${PORT}`);
 });

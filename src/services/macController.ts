@@ -10,15 +10,16 @@ class MacControllerService {
   private port: number = 3001;
   private isConnected: boolean = false;
   private reconnectTimer: any = null;
+  private httpPollTimer: any = null;
 
   private onSystemSpecsListeners: Set<SystemSpecsCallback> = new Set();
   private onMediaStateListeners: Set<MediaStateCallback> = new Set();
   private onToastListeners: Set<ToastCallback> = new Set();
 
   private mediaState: MediaTrackState = {
-    trackName: 'Waiting for Mac Music...',
-    artist: 'Open Spotify or Apple Music on Mac',
-    album: 'Mac Companion Server',
+    trackName: 'Waiting for Mac Connection...',
+    artist: 'Run Start-The-Slate-Mac-Server on Mac',
+    album: 'Mac Integration',
     albumArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80',
     isPlaying: false,
     durationSeconds: 180,
@@ -33,12 +34,11 @@ class MacControllerService {
     memoryUsedGB: 0,
     memoryTotalGB: 16.0,
     memoryPercentage: 0,
-    macName: 'Connecting to Mac...',
+    macName: 'Mac Disconnected',
     isConnected: false
   };
 
   constructor() {
-    // Attempt automatic IP discovery on load
     const savedIp = localStorage.getItem('slate_mac_ip');
     if (savedIp) {
       this.macIp = savedIp;
@@ -48,40 +48,40 @@ class MacControllerService {
       this.macIp = 'localhost';
     }
 
-    this.connectWebSocket();
+    this.connect();
   }
 
   public setMacAddress(ip: string, port: number = 3001) {
-    this.macIp = ip || 'localhost';
+    this.macIp = ip.trim() || 'localhost';
     this.port = port;
     localStorage.setItem('slate_mac_ip', this.macIp);
-    this.connectWebSocket();
+    this.connect();
   }
 
-  public connectWebSocket() {
+  public getMacIp() {
+    return this.macIp;
+  }
+
+  public connect() {
+    // 1. Try WebSocket
+    this.connectWebSocket();
+    
+    // 2. Start HTTP Polling fallback for HTTPS browser environments
+    this.startHttpPolling();
+  }
+
+  private connectWebSocket() {
     if (this.ws) {
-      try {
-        this.ws.close();
-      } catch (e) {}
+      try { this.ws.close(); } catch (e) {}
     }
 
     const wsUrl = `ws://${this.macIp}:${this.port}`;
-    console.log(`[MacController] Connecting to Mac Companion at ${wsUrl}...`);
-
     try {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('[MacController] Connected to Mac Companion!');
-        this.isConnected = true;
-        this.systemSpecs.isConnected = true;
-        this.notifySpecs();
-        this.notifyToast(`Connected to Mac (${this.macIp})`);
-        
-        if (this.reconnectTimer) {
-          clearInterval(this.reconnectTimer);
-          this.reconnectTimer = null;
-        }
+        console.log('[MacController] Connected via WebSocket');
+        this.setConnectedState(true, `Connected to Mac (${this.macIp})`);
       };
 
       this.ws.onmessage = (event) => {
@@ -94,104 +94,134 @@ class MacControllerService {
             this.mediaState = { ...data.payload };
             this.notifyMedia();
           }
-        } catch (err) {
-          console.error('[MacController] Message error:', err);
-        }
+        } catch (err) {}
       };
 
       this.ws.onerror = () => {
-        this.handleDisconnect();
+        this.handleWsFailure();
       };
 
       this.ws.onclose = () => {
-        this.handleDisconnect();
+        this.handleWsFailure();
       };
     } catch (err) {
-      this.handleDisconnect();
+      this.handleWsFailure();
     }
   }
 
-  private handleDisconnect() {
+  private handleWsFailure() {
+    if (!this.isConnected) {
+      // Trigger instant HTTP REST fetch fallback
+      this.fetchHttpState();
+    }
+  }
+
+  // HTTP REST API Fallback
+  private async fetchHttpState() {
+    try {
+      const res = await fetch(`http://${this.macIp}:${this.port}/api/state`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(2000)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.systemSpecs && data.mediaState) {
+          this.systemSpecs = { ...data.systemSpecs, isConnected: true };
+          this.mediaState = { ...data.mediaState };
+          this.setConnectedState(true, `Connected to Mac (${this.macIp})`);
+          this.notifySpecs();
+          this.notifyMedia();
+          return;
+        }
+      }
+    } catch (err) {}
+
+    // Disconnected
     if (this.isConnected) {
-      this.notifyToast('Disconnected from Mac. Retrying auto-connect...');
+      this.notifyToast(`Disconnected from Mac (${this.macIp}). Retrying...`);
     }
     this.isConnected = false;
     this.systemSpecs = {
       ...this.systemSpecs,
       isConnected: false,
-      macName: `Mac Server Offline (${this.macIp})`
+      macName: `Mac Server Disconnected (${this.macIp})`
     };
     this.notifySpecs();
+  }
 
-    if (!this.reconnectTimer) {
-      this.reconnectTimer = setInterval(() => {
-        if (!this.isConnected) {
-          this.connectWebSocket();
-        }
-      }, 4000);
+  private startHttpPolling() {
+    if (this.httpPollTimer) clearInterval(this.httpPollTimer);
+    this.httpPollTimer = setInterval(() => {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        this.fetchHttpState();
+      }
+    }, 1500);
+  }
+
+  private setConnectedState(connected: boolean, msg: string) {
+    if (!this.isConnected && connected) {
+      this.notifyToast(msg);
+    }
+    this.isConnected = connected;
+    this.systemSpecs.isConnected = connected;
+    this.notifySpecs();
+  }
+
+  // Send Action via WS or HTTP POST
+  public async sendAction(payload: any) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(payload));
+      return;
+    }
+
+    // Fallback to HTTP POST
+    try {
+      await fetch(`http://${this.macIp}:${this.port}/api/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      this.notifyToast(`Failed to send action to Mac (${this.macIp}). Check Settings.`);
     }
   }
 
-  // Real App Launching on Mac
   public launchApp(appOrCommand: string) {
-    if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        action: 'LAUNCH_APP',
-        appName: appOrCommand
-      }));
-      this.notifyToast(`Launching ${appOrCommand} on Mac...`);
-    } else {
-      this.notifyToast(`Mac Server Offline. Double-click Start-The-Slate-Mac-Server.command on Mac!`);
-    }
+    this.notifyToast(`Launching ${appOrCommand} on Mac...`);
+    this.sendAction({ action: 'LAUNCH_APP', appName: appOrCommand });
   }
 
-  // Real Playback Controls
   public togglePlayPause() {
     this.mediaState.isPlaying = !this.mediaState.isPlaying;
     this.notifyMedia();
-
-    if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ action: 'MEDIA_PLAY_PAUSE' }));
-    }
+    this.sendAction({ action: 'MEDIA_PLAY_PAUSE' });
   }
 
   public nextTrack() {
     this.mediaState.positionSeconds = 0;
     this.notifyMedia();
-
-    if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ action: 'MEDIA_NEXT' }));
-    }
+    this.sendAction({ action: 'MEDIA_NEXT' });
   }
 
   public previousTrack() {
     this.mediaState.positionSeconds = 0;
     this.notifyMedia();
-
-    if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ action: 'MEDIA_PREV' }));
-    }
+    this.sendAction({ action: 'MEDIA_PREV' });
   }
 
   public setVolume(vol: number) {
     this.mediaState.volume = Math.max(0, Math.min(100, vol));
     this.notifyMedia();
-
-    if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ action: 'SET_VOLUME', volume: vol }));
-    }
+    this.sendAction({ action: 'SET_VOLUME', volume: vol });
   }
 
   public seekPosition(seconds: number) {
     this.mediaState.positionSeconds = seconds;
     this.notifyMedia();
-
-    if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ action: 'SEEK_MEDIA', position: seconds }));
-    }
+    this.sendAction({ action: 'SEEK_MEDIA', position: seconds });
   }
 
-  // Subscriptions
   public subscribeSpecs(cb: SystemSpecsCallback) {
     this.onSystemSpecsListeners.add(cb);
     cb(this.systemSpecs);
