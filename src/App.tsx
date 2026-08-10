@@ -176,33 +176,42 @@ export function App() {
     localStorage.setItem('the_slate_clock_color', newColor);
   };
 
-  // Hard-coded 4-Second Auto-Click Fullscreen Button Trigger after server/page loads!
+  // WebApp Simulated Finger Press & Fullscreen Trigger Engine
   useEffect(() => {
-    const fsTimer = setTimeout(() => {
+    const simulateFingerPress = () => {
       const btn = document.getElementById('fullscreen-btn');
       if (btn) {
-        btn.click();
+        try {
+          // Dispatch synthetic touch, pointer, and click events directly on the fullscreen button
+          btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch' }));
+          btn.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true }));
+          btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+          btn.click();
+        } catch (e) {}
       }
-      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
-    }, 4000);
 
-    const triggerAutoFullscreen = () => {
-      const btn = document.getElementById('fullscreen-btn');
-      if (btn) btn.click();
       if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
       }
     };
 
-    window.addEventListener('touchstart', triggerAutoFullscreen, { once: true });
-    window.addEventListener('click', triggerAutoFullscreen, { once: true });
+    // Trigger synthetic finger presses at 500ms, 1500ms, and 3000ms after load
+    const t1 = setTimeout(simulateFingerPress, 500);
+    const t2 = setTimeout(simulateFingerPress, 1500);
+    const t3 = setTimeout(simulateFingerPress, 3000);
+
+    // Global first gesture fallback
+    window.addEventListener('touchstart', simulateFingerPress, { once: true });
+    window.addEventListener('pointerdown', simulateFingerPress, { once: true });
+    window.addEventListener('click', simulateFingerPress, { once: true });
 
     return () => {
-      clearTimeout(fsTimer);
-      window.removeEventListener('touchstart', triggerAutoFullscreen);
-      window.removeEventListener('click', triggerAutoFullscreen);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      window.removeEventListener('touchstart', simulateFingerPress);
+      window.removeEventListener('pointerdown', simulateFingerPress);
+      window.removeEventListener('click', simulateFingerPress);
     };
   }, []);
 
