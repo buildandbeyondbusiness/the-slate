@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Cpu, Music, Compass, Sun, Bell, Maximize2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Cpu, Music, Sun, Bell, Maximize2 } from 'lucide-react';
 import { MacSystemSpecs, MediaTrackState, ClockStyle } from '../types';
 
 interface StandbyScreenProps {
@@ -70,20 +70,20 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
 
   const renderClockDisplay = () => {
     switch (clockStyle) {
-      // 1. Apple iOS 17 Curvy Organic Serif Numeral Clock
+      // 1. Apple iOS 17 Curvy Organic Serif Numeral Clock (PROPERLY SCALED GIANT CLOCK)
       case 'curvy-apple':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: 'auto 0' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px', lineHeight: 1 }}>
-              <span style={{ fontSize: '7.5rem', fontWeight: 900, color: clockColor, fontFamily: '"New York", "Georgia", "Outfit", serif', fontStyle: 'italic', letterSpacing: '-2px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', lineHeight: 0.9 }}>
+              <span style={{ fontSize: '9.8rem', fontWeight: 900, color: clockColor, fontFamily: '"New York", "Georgia", serif', fontStyle: 'italic', letterSpacing: '-5px' }}>
                 {parseInt(hours)}
               </span>
-              <span style={{ fontSize: '5.5rem', fontWeight: 700, color: '#8B9299', margin: '0 2px' }}>:</span>
-              <span style={{ fontSize: '7.5rem', fontWeight: 900, color: '#F1F3F4', fontFamily: '"New York", "Georgia", "Outfit", serif', letterSpacing: '-2px' }}>
+              <span style={{ fontSize: '7rem', fontWeight: 700, color: '#8B9299', margin: '0 4px', transform: 'translateY(-8px)' }}>:</span>
+              <span style={{ fontSize: '9.8rem', fontWeight: 900, color: '#F1F3F4', fontFamily: '"New York", "Georgia", serif', letterSpacing: '-5px' }}>
                 {minutes}
               </span>
             </div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: clockColor, marginTop: '8px', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: clockColor, marginTop: '16px', letterSpacing: '0.5px' }}>
               {dateStr}
             </div>
           </div>
@@ -92,24 +92,24 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
       // 2. Apple iOS StandBy Translucent Pill Capsules Clock
       case 'pill-blocks':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: 'auto 0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ background: 'rgba(255, 255, 255, 0.07)', border: `1px solid ${clockColor}40`, borderRadius: '24px', padding: '12px 22px', backdropFilter: 'blur(16px)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
-                <span style={{ fontSize: '5.5rem', fontWeight: 900, color: clockColor, letterSpacing: '-2px', lineHeight: 1, fontFamily: '"Outfit", sans-serif' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: `1px solid ${clockColor}50`, borderRadius: '32px', padding: '16px 28px', backdropFilter: 'blur(20px)', boxShadow: '0 12px 32px rgba(0,0,0,0.45)' }}>
+                <span style={{ fontSize: '7.2rem', fontWeight: 900, color: clockColor, letterSpacing: '-3px', lineHeight: 1, fontFamily: '"Outfit", sans-serif' }}>
                   {hours}
                 </span>
               </div>
 
-              <span style={{ fontSize: '3rem', fontWeight: 900, color: '#8B9299' }}>:</span>
+              <span style={{ fontSize: '4rem', fontWeight: 900, color: '#8B9299' }}>:</span>
 
-              <div style={{ background: 'rgba(255, 255, 255, 0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '24px', padding: '12px 22px', backdropFilter: 'blur(16px)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
-                <span style={{ fontSize: '5.5rem', fontWeight: 900, color: '#F1F3F4', letterSpacing: '-2px', lineHeight: 1, fontFamily: '"Outfit", sans-serif' }}>
+              <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '32px', padding: '16px 28px', backdropFilter: 'blur(20px)', boxShadow: '0 12px 32px rgba(0,0,0,0.45)' }}>
+                <span style={{ fontSize: '7.2rem', fontWeight: 900, color: '#F1F3F4', letterSpacing: '-3px', lineHeight: 1, fontFamily: '"Outfit", sans-serif' }}>
                   {minutes}
                 </span>
               </div>
             </div>
 
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: clockColor, marginTop: '14px' }}>
+            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: clockColor, marginTop: '20px' }}>
               {dateStr}
             </div>
           </div>
@@ -118,28 +118,28 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
       // 3. Apple StandBy Hero Clock
       case 'minimal-hero':
         return (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: 'auto 0', width: '100%' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-              <span style={{ fontSize: '7.2rem', fontWeight: 900, color: '#F1F3F4', letterSpacing: '-4px', lineHeight: 1, fontFamily: '"Outfit", sans-serif' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%', width: '100%', padding: '0 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline' }}>
+              <span style={{ fontSize: '9.5rem', fontWeight: 900, color: '#F1F3F4', letterSpacing: '-6px', lineHeight: 0.9, fontFamily: '"Outfit", sans-serif' }}>
                 {parseInt(hours)}:{minutes}
               </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left', paddingLeft: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left', paddingLeft: '24px', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
               <div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: clockColor, letterSpacing: '0.5px' }}>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: clockColor, letterSpacing: '0.5px' }}>
                   {dayAbbr} {dayNum}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '1.1rem', fontWeight: 700, color: '#F1F3F4', marginTop: '2px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem', fontWeight: 700, color: '#F1F3F4', marginTop: '4px' }}>
                   <span>30°</span>
-                  <Sun style={{ width: '18px', height: '18px', color: clockColor }} />
+                  <Sun style={{ width: '20px', height: '20px', color: clockColor }} />
                 </div>
               </div>
 
-              <div style={{ paddingTop: '10px', borderTop: '1px solid #2A2F34' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: clockColor }}>
-                  <Bell style={{ width: '16px', height: '16px' }} />
-                  <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#F1F3F4' }}>8:00AM</span>
+              <div style={{ paddingTop: '12px', borderTop: '1px solid #2A2F34' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: clockColor }}>
+                  <Bell style={{ width: '18px', height: '18px' }} />
+                  <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#F1F3F4' }}>8:00AM</span>
                 </div>
               </div>
             </div>
@@ -149,25 +149,25 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
       // 4. Apple StandBy Playful Multi-Color Block Clock
       case 'playful-colors':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: 'auto 0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px', lineHeight: 1 }}>
-              <span style={{ fontSize: '7.5rem', fontWeight: 900, color: clockColor, fontFamily: '"Outfit", sans-serif', letterSpacing: '-2px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', lineHeight: 0.9 }}>
+              <span style={{ fontSize: '9.8rem', fontWeight: 900, color: clockColor, fontFamily: '"Outfit", sans-serif', letterSpacing: '-4px' }}>
                 {hours[0]}
               </span>
-              <span style={{ fontSize: '7.5rem', fontWeight: 900, color: '#F4D28A', fontFamily: '"Outfit", sans-serif', letterSpacing: '-2px' }}>
+              <span style={{ fontSize: '9.8rem', fontWeight: 900, color: '#F4D28A', fontFamily: '"Outfit", sans-serif', letterSpacing: '-4px' }}>
                 {hours[1]}
               </span>
-              <span style={{ fontSize: '5.5rem', fontWeight: 900, color: '#8B9299', margin: '0 4px', transform: 'translateY(-6px)' }}>
+              <span style={{ fontSize: '7rem', fontWeight: 900, color: '#8B9299', margin: '0 4px', transform: 'translateY(-8px)' }}>
                 :
               </span>
-              <span style={{ fontSize: '7.5rem', fontWeight: 900, color: '#69C58A', fontFamily: '"Outfit", sans-serif', letterSpacing: '-2px' }}>
+              <span style={{ fontSize: '9.8rem', fontWeight: 900, color: '#69C58A', fontFamily: '"Outfit", sans-serif', letterSpacing: '-4px' }}>
                 {minutes[0]}
               </span>
-              <span style={{ fontSize: '7.5rem', fontWeight: 900, color: '#F1F3F4', fontFamily: '"Outfit", sans-serif', letterSpacing: '-2px' }}>
+              <span style={{ fontSize: '9.8rem', fontWeight: 900, color: '#F1F3F4', fontFamily: '"Outfit", sans-serif', letterSpacing: '-4px' }}>
                 {minutes[1]}
               </span>
             </div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: clockColor, marginTop: '4px' }}>
+            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: clockColor, marginTop: '12px' }}>
               {dateStr}
             </div>
           </div>
@@ -176,14 +176,14 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
       // 5. Stacked Big Numerals
       case 'stacked':
         return (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: 'auto 0', width: '100%' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 0.85 }}>
-              <span style={{ fontSize: '6rem', fontWeight: 900, color: '#F1F3F4', letterSpacing: '-3px' }}>{hours}</span>
-              <span style={{ fontSize: '6rem', fontWeight: 900, color: clockColor, letterSpacing: '-3px' }}>{minutes}</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%', width: '100%', padding: '0 16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 0.82 }}>
+              <span style={{ fontSize: '7.8rem', fontWeight: 900, color: '#F1F3F4', letterSpacing: '-4px' }}>{hours}</span>
+              <span style={{ fontSize: '7.8rem', fontWeight: 900, color: clockColor, letterSpacing: '-4px' }}>{minutes}</span>
             </div>
-            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#F4D28A', textTransform: 'uppercase', letterSpacing: '1px' }}>{ampmStr}</span>
-              <span style={{ fontSize: '1rem', fontWeight: 600, color: '#8B9299' }}>{dateStr}</span>
+            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <span style={{ fontSize: '1.8rem', fontWeight: 900, color: '#F4D28A', textTransform: 'uppercase', letterSpacing: '2px' }}>{ampmStr}</span>
+              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#8B9299' }}>{dateStr}</span>
             </div>
           </div>
         );
@@ -191,27 +191,27 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
       // 6. Apple World Clock
       case 'world':
         return (
-          <div style={{ margin: 'auto 0', width: '100%' }}>
-            <div className="clock-hero-time">
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', width: '100%', padding: '0 12px' }}>
+            <div className="clock-hero-time" style={{ fontSize: '6rem', lineHeight: 1 }}>
               <span>{hours}:{minutes}</span>
-              <span className="clock-hero-ampm">{ampmStr}</span>
+              <span className="clock-hero-ampm" style={{ fontSize: '1.4rem' }}>{ampmStr}</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #2A2F34' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #2A2F34' }}>
               <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: clockColor, textTransform: 'uppercase' }}>CUPERTINO</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#F1F3F4', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: clockColor, textTransform: 'uppercase' }}>CUPERTINO</div>
+                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#F1F3F4', marginTop: '4px' }}>
                   {String((parseInt(hours) + 15) % 12 || 12).padStart(2, '0')}:{minutes}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#69C58A', textTransform: 'uppercase' }}>LONDON</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#F1F3F4', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#69C58A', textTransform: 'uppercase' }}>LONDON</div>
+                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#F1F3F4', marginTop: '4px' }}>
                   {String((parseInt(hours) + 5) % 12 || 12).padStart(2, '0')}:{minutes}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#F4D28A', textTransform: 'uppercase' }}>TOKYO</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#F1F3F4', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#F4D28A', textTransform: 'uppercase' }}>TOKYO</div>
+                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#F1F3F4', marginTop: '4px' }}>
                   {String((parseInt(hours) + 14) % 12 || 12).padStart(2, '0')}:{minutes}
                 </div>
               </div>
@@ -227,58 +227,13 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
   return (
     <div className="standby-grid">
       {/* ======================================================== */}
-      {/* LEFT PANEL: Swappable Apple Standby Clock Widget         */}
+      {/* LEFT PANEL: Clean, Uncluttered Pure Apple Hero Clock    */}
       {/* ======================================================== */}
       <div 
         className="glass-card hero-clock-card"
-        style={{ position: 'relative' }}
+        style={{ padding: '32px 36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        {/* Top Header */}
-        <div className="card-top-row">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="standby-tag" style={{ color: clockColor, borderColor: `${clockColor}40`, background: `${clockColor}15` }}>StandBy Clock</span>
-            
-            {/* Clock Face Indicator Dots */}
-            <div style={{ display: 'flex', gap: '4px', marginLeft: '6px' }}>
-              {(['curvy-apple', 'pill-blocks', 'minimal-hero', 'playful-colors', 'stacked', 'world'] as ClockStyle[]).map((st) => (
-                <button
-                  key={st}
-                  onClick={() => onClockStyleChange(st)}
-                  style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: clockStyle === st ? clockColor : '#2A2F34',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-          
-          <button
-            onClick={onNavigateToStreamDeck}
-            className="compass-btn"
-            title="Go to Stream Deck Screen (Page 2)"
-          >
-            <Compass style={{ width: '22px', height: '22px', color: clockColor }} />
-          </button>
-        </div>
-
-        {/* Center Clock Render */}
         {renderClockDisplay()}
-
-        {/* Bottom Row Footer */}
-        <div className="card-bottom-row">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#69C58A' }} />
-            <span>Apple StandBy Mode</span>
-          </div>
-          <span style={{ color: clockColor, fontWeight: 700 }}>{clockStyle.toUpperCase()}</span>
-        </div>
       </div>
 
       {/* ======================================================== */}
