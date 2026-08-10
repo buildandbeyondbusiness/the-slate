@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Compass, Moon, Sun, Settings, Monitor, Volume2, Wifi, WifiOff } from 'lucide-react';
+import { Compass, Moon, Sun, Settings, Monitor, Volume2 } from 'lucide-react';
 import { ViewPage, MacSystemSpecs } from '../types';
 
 interface TopBarProps {
@@ -43,111 +43,90 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
   }, []);
 
   return (
-    <header className="w-full h-16 px-6 flex items-center justify-between backdrop-blur-xl bg-white/5 border-b border-white/10 z-40">
-      {/* Left: Compass / Navigation Page Switcher */}
-      <div className="flex items-center gap-3">
+    <header className="top-bar">
+      {/* Left: Compass / Navigation Switcher */}
+      <div className="top-bar-left">
         <button
           onClick={() => onPageChange(currentPage === 'standby' ? 'streamdeck' : 'standby')}
-          className="flex items-center gap-2.5 px-4 py-2 rounded-full glass-pill hover:bg-white/20 transition-all duration-300 group"
+          className="glass-pill-btn"
           title="Switch between StandBy View & Stream Deck Grid"
         >
-          <div className={`p-1.5 rounded-full ${currentPage === 'standby' ? 'bg-sky-500/20 text-sky-400' : 'bg-rose-500/20 text-rose-400'} transition-transform group-hover:rotate-45 duration-500`}>
-            <Compass className="w-5 h-5" />
+          <div className="icon-badge" style={{ background: currentPage === 'standby' ? 'rgba(56,189,248,0.2)' : 'rgba(244,63,94,0.2)', color: currentPage === 'standby' ? '#38bdf8' : '#f43f5e' }}>
+            <Compass style={{ width: '18px', height: '18px' }} />
           </div>
-          <span className="text-sm font-semibold tracking-wide">
-            {currentPage === 'standby' ? 'Standby Screen' : 'Stream Deck'}
-          </span>
+          <span>{currentPage === 'standby' ? 'Standby Screen' : 'Stream Deck'}</span>
         </button>
 
-        {/* Page Dots Indicator */}
-        <div className="flex items-center gap-1.5 ml-2">
-          <button
-            onClick={() => onPageChange('standby')}
-            className={`w-2.5 h-2.5 rounded-full transition-all ${currentPage === 'standby' ? 'w-6 bg-sky-400' : 'bg-white/30'}`}
-          />
-          <button
-            onClick={() => onPageChange('streamdeck')}
-            className={`w-2.5 h-2.5 rounded-full transition-all ${currentPage === 'streamdeck' ? 'w-6 bg-rose-400' : 'bg-white/30'}`}
-          />
+        {/* Dots */}
+        <div className="page-dots">
+          <button onClick={() => onPageChange('standby')} className={`dot ${currentPage === 'standby' ? 'active' : ''}`} />
+          <button onClick={() => onPageChange('streamdeck')} className={`dot ${currentPage === 'streamdeck' ? 'active' : ''}`} />
         </div>
       </div>
 
-      {/* Center: Clock & Date */}
-      <div className="flex flex-col items-center">
-        <span className="text-lg font-bold tracking-tight text-white/90 drop-shadow">
-          {timeString}
-        </span>
-        <span className="text-[11px] font-medium text-slate-400 -mt-1 tracking-wider uppercase">
-          {dateString}
-        </span>
+      {/* Center: Time & Date */}
+      <div className="top-bar-center">
+        <span className="time-title">{timeString}</span>
+        <span className="date-subtitle">{dateString}</span>
       </div>
 
-      {/* Right Controls: Mac Status, Volume, Night Mode, Settings */}
-      <div className="flex items-center gap-3">
-        {/* Mac Connectivity Indicator */}
-        <div 
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition"
+      {/* Right Controls */}
+      <div className="top-bar-right">
+        {/* Mac Status Badge */}
+        <button
           onClick={onOpenSettings}
+          className="glass-pill-btn"
           title={macSpecs.isConnected ? `Connected to ${macSpecs.macName}` : 'Click to connect Mac Companion Server'}
         >
-          <Monitor className="w-4 h-4 text-slate-400" />
-          <span className="relative flex h-2 w-2">
-            {macSpecs.isConnected ? (
-              <>
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </>
-            ) : (
-              <span className="inline-flex rounded-full h-2 w-2 bg-amber-500 animate-pulse"></span>
-            )}
-          </span>
-          <span className="text-xs text-slate-300 font-medium hidden md:inline">
-            {macSpecs.isConnected ? 'Mac Live' : 'Simulated'}
-          </span>
-        </div>
+          <Monitor style={{ width: '16px', height: '16px', color: '#94a3b8' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: macSpecs.isConnected ? '#10b981' : '#f59e0b', boxShadow: macSpecs.isConnected ? '0 0 10px #10b981' : 'none' }} />
+          <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>{macSpecs.isConnected ? 'Mac Live' : 'Simulated'}</span>
+        </button>
 
-        {/* Volume Quick Control */}
-        <div className="relative flex items-center">
+        {/* Volume Button */}
+        <div style={{ position: 'relative' }}>
           <button
             onClick={() => setShowVolumeSlider(!showVolumeSlider)}
-            className="p-2 rounded-full glass-pill hover:bg-white/20 transition text-slate-300"
+            className="glass-pill-btn"
+            style={{ padding: '8px', borderRadius: '50%' }}
             title="Adjust Master Volume"
           >
-            <Volume2 className="w-4 h-4" />
+            <Volume2 style={{ width: '16px', height: '16px' }} />
           </button>
 
           {showVolumeSlider && (
-            <div className="absolute top-12 right-0 bg-slate-900/90 backdrop-blur-xl border border-white/15 p-3 rounded-2xl shadow-2xl flex items-center gap-3 w-48 z-50 animate-in fade-in slide-in-from-top-2">
-              <Volume2 className="w-4 h-4 text-slate-400" />
+            <div style={{ position: 'absolute', top: '48px', right: 0, background: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', padding: '12px 16px', borderRadius: '20px', width: '200px', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 60, boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+              <Volume2 style={{ width: '16px', height: '16px', color: '#94a3b8' }} />
               <input
                 type="range"
                 min="0"
                 max="100"
                 value={volume}
                 onChange={(e) => onVolumeChange(Number(e.target.value))}
-                className="w-full accent-sky-400"
               />
-              <span className="text-xs text-slate-300 font-semibold w-6">{volume}%</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, width: '32px' }}>{volume}%</span>
             </div>
           )}
         </div>
 
-        {/* Night Mode Toggle */}
+        {/* StandBy Night Mode Button */}
         <button
           onClick={onToggleNightMode}
-          className={`p-2 rounded-full transition-all duration-300 ${nightMode ? 'bg-rose-500/30 text-rose-400 border border-rose-500/50 shadow-lg shadow-rose-500/20' : 'glass-pill hover:bg-white/20 text-slate-300'}`}
+          className="glass-pill-btn"
+          style={{ padding: '8px', borderRadius: '50%', background: nightMode ? 'rgba(244, 63, 94, 0.3)' : 'rgba(255, 255, 255, 0.07)', color: nightMode ? '#f43f5e' : '#ffffff' }}
           title="Toggle StandBy Night Red Mode"
         >
-          {nightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          {nightMode ? <Moon style={{ width: '16px', height: '16px' }} /> : <Sun style={{ width: '16px', height: '16px' }} />}
         </button>
 
         {/* Settings Button */}
         <button
           onClick={onOpenSettings}
-          className="p-2 rounded-full glass-pill hover:bg-white/20 transition text-slate-300"
+          className="glass-pill-btn"
+          style={{ padding: '8px', borderRadius: '50%' }}
           title="Open Settings"
         >
-          <Settings className="w-4 h-4" />
+          <Settings style={{ width: '16px', height: '16px' }} />
         </button>
       </div>
     </header>

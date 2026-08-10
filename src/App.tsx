@@ -114,7 +114,6 @@ export function App() {
     enableHaptics: true
   });
 
-  // Subscribe to Mac Controller Service
   useEffect(() => {
     const unsubSpecs = macController.subscribeSpecs(setMacSpecs);
     const unsubMedia = macController.subscribeMedia(setMediaState);
@@ -144,9 +143,9 @@ export function App() {
 
     if (Math.abs(diffX) > 60) {
       if (diffX > 0 && currentPage === 'standby') {
-        setCurrentPage('streamdeck'); // Swipe Left -> Page 2
+        setCurrentPage('streamdeck');
       } else if (diffX < 0 && currentPage === 'streamdeck') {
-        setCurrentPage('standby'); // Swipe Right -> Page 1
+        setCurrentPage('standby');
       }
     }
     setTouchStartX(null);
@@ -174,12 +173,9 @@ export function App() {
     <div 
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className={`w-full h-full flex flex-col relative overflow-hidden bg-slate-950 text-white ${nightMode ? 'night-mode' : ''}`}
+      className={`app-container ${nightMode ? 'night-mode' : ''}`}
     >
-      {/* Dynamic Background Backdrop Lighting */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950/40 pointer-events-none" />
-
-      {/* Top CarPlay Header Bar */}
+      {/* Top Navigation */}
       <TopBarNavigation
         currentPage={currentPage}
         onPageChange={setCurrentPage}
@@ -191,8 +187,8 @@ export function App() {
         onVolumeChange={(vol) => macController.setVolume(vol)}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 w-full h-[calc(100vh-4rem)] relative z-10 overflow-hidden">
+      {/* Main Content Area */}
+      <main className="main-content">
         {currentPage === 'standby' ? (
           <StandbyScreen
             macSpecs={macSpecs}
@@ -218,7 +214,7 @@ export function App() {
         )}
       </main>
 
-      {/* Modals & Popups */}
+      {/* Modals & Toast */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
