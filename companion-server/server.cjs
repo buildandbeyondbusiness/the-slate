@@ -4,7 +4,7 @@
  * High-performance, zero-latency macOS native integration server.
  * - 100% Exact macOS Activity Monitor Memory Engine (16KB Apple Silicon Page Size Aware)
  * - Instant Apple Music & Spotify Real-Time Sync Engine
- * - Real-Time Mac Battery & Power Accounting (pmset)
+ * - Explicit macOS System Settings Low Power Mode & Power Accounting (pmset -g)
  * - Native macOS Control Center Screenshot Toolbar App
  * - Mute / Unmute Toggle Logic
  * - Native Mac App Launchers
@@ -75,16 +75,22 @@ function getCpuTimes() {
   return { user, sys, idle, irq, total: user + sys + idle + irq };
 }
 
-// Real-Time Mac Battery & Power Parser (pmset)
+// Real-Time Mac Battery & System Settings Low Power Mode Parser (pmset -g)
 function getMacBatteryMetrics() {
   try {
     const battRaw = execSync('pmset -g batt', { timeout: 1000 }).toString();
+    const sysRaw = execSync('pmset -g', { timeout: 1000 }).toString();
+
     const levelMatch = battRaw.match(/(\d+)%/);
     const batteryLevel = levelMatch ? parseInt(levelMatch[1]) : 85;
 
-    const lower = battRaw.toLowerCase();
-    const isCharging = (lower.includes('ac power') || lower.includes('charging') || lower.includes('ac attached')) && !lower.includes('discharging');
-    const isLowPower = batteryLevel <= 20 || lower.includes('lowpowermode 1');
+    const lowerBatt = battRaw.toLowerCase();
+    const lowerSys = sysRaw.toLowerCase();
+
+    const isCharging = (lowerBatt.includes('ac power') || lowerBatt.includes('charging') || lowerBatt.includes('ac attached')) && !lowerBatt.includes('discharging');
+
+    // Explicit macOS Low Power Mode Detection (lowpowermode 1)
+    const isLowPower = lowerSys.includes('lowpowermode 1') || lowerSys.includes('lowpowermode          1') || batteryLevel <= 20;
 
     return { batteryLevel, isCharging, isLowPower };
   } catch (e) {
