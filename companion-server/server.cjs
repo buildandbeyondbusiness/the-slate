@@ -2,8 +2,10 @@
  * The Slate — Production Mac Companion Agent
  * 
  * High-performance, zero-latency macOS native integration server.
- * Reads Apple Music & Spotify, launches native Mac applications,
- * and handles system macros.
+ * - Apple Music & Spotify Real-Time Sync Engine
+ * - Interactive Screenshot Selection Menu (screencapture -i -c)
+ * - Mute / Unmute Toggle Logic
+ * - Native Mac App Launchers
  */
 
 const http = require('http');
@@ -23,6 +25,7 @@ let lastCpuTimes = getCpuTimes();
 let cachedCpuUsage = 15;
 let cachedMediaState = null;
 let lastMediaFetchTime = 0;
+let lastMutedVolume = 75;
 
 function getLocalIPs() {
   const interfaces = os.networkInterfaces();
@@ -41,7 +44,7 @@ const localIps = getLocalIPs();
 const primaryIp = localIps[0] || 'localhost';
 
 console.log(`\n================================================================`);
-console.log(`  THE SLATE — MAC COMPANION AGENT (NATIVE MAC APPS READY)`);
+console.log(`  THE SLATE — MAC COMPANION AGENT (STABLE VERSION)`);
 console.log(`================================================================`);
 console.log(` 📌 YOUR MAC IP ADDRESS:  ${primaryIp}`);
 console.log(` 📌 LOCAL TABLET WEB APP: http://${primaryIp}:3000`);
@@ -122,26 +125,30 @@ function fetchiTunesArtwork(trackName, artistName) {
   });
 }
 
-// REAL Media Reader (Apple Music Priority)
+// REAL Media Reader (Apple Music & Spotify with Safe AppleScript Property Wrapping)
 async function getRealMediaState() {
   const now = Date.now();
-  if (cachedMediaState && (now - lastMediaFetchTime < 1000)) {
+  if (cachedMediaState && (now - lastMediaFetchTime < 800)) {
     return cachedMediaState;
   }
 
-  // 1. Apple Music Check (Priority 1)
+  // 1. Apple Music Priority Check
   const musicRunning = await runCmd(`osascript -e 'if application "Music" is running then return "running"'`);
   if (musicRunning === 'running') {
     const script = `
       tell application "Music"
-        set tName to name of current track
-        set tArtist to artist of current track
-        set tAlbum to album of current track
-        set pState to player state
-        set pPos to player position
-        set tDur to duration of current track
-        set sysVol to sound volume
-        return tName & "|||" & tArtist & "|||" & tAlbum & "|||" & pState & "|||" & pPos & "|||" & tDur & "|||" & sysVol
+        try
+          set tName to name of current track
+          set tArtist to artist of current track
+          set tAlbum to album of current track
+          set pState to (player state as text)
+          set pPos to player position
+          set tDur to duration of current track
+          set sysVol to sound volume
+          return tName & "|||" & tArtist & "|||" & tAlbum & "|||" & pState & "|||" & pPos & "|||" & tDur & "|||" & sysVol
+        on error
+          return "NO_TRACK"
+        end try
       end tell
     `;
     const res = await runCmd(script);
@@ -154,7 +161,7 @@ async function getRealMediaState() {
         artist: artist || 'Apple Music Artist',
         album: album || 'Apple Music Album',
         albumArt: artworkUrl,
-        isPlaying: pState === 'playing',
+        isPlaying: pState.toLowerCase().includes('play'),
         durationSeconds: Math.round(parseFloat(tDur) || 180),
         positionSeconds: Math.round(parseFloat(pPos) || 0),
         volume: parseInt(sysVol) || 75,
@@ -165,20 +172,24 @@ async function getRealMediaState() {
     }
   }
 
-  // 2. Spotify Check (Priority 2)
+  // 2. Spotify Priority Check
   const spotifyRunning = await runCmd(`osascript -e 'if application "Spotify" is running then return "running"'`);
   if (spotifyRunning === 'running') {
     const script = `
       tell application "Spotify"
-        set tName to name of current track
-        set tArtist to artist of current track
-        set tAlbum to album of current track
-        set tArt to artwork url of current track
-        set pState to player state
-        set pPos to player position
-        set tDur to (duration of current track) / 1000
-        set sysVol to sound volume
-        return tName & "|||" & tArtist & "|||" & tAlbum & "|||" & tArt & "|||" & pState & "|||" & pPos & "|||" & tDur & "|||" & sysVol
+        try
+          set tName to name of current track
+          set tArtist to artist of current track
+          set tAlbum to album of current track
+          set tArt to artwork url of current track
+          set pState to (player state as text)
+          set pPos to player position
+          set tDur to (duration of current track) / 1000
+          set sysVol to sound volume
+          return tName & "|||" & tArtist & "|||" & tAlbum & "|||" & tArt & "|||" & pState & "|||" & pPos & "|||" & tDur & "|||" & sysVol
+        on error
+          return "NO_TRACK"
+        end try
       end tell
     `;
     const res = await runCmd(script);
@@ -194,7 +205,7 @@ async function getRealMediaState() {
         artist: artist || 'Spotify Artist',
         album: album || 'Spotify Album',
         albumArt: artworkUrl,
-        isPlaying: pState === 'playing',
+        isPlaying: pState.toLowerCase().includes('play'),
         durationSeconds: Math.round(parseFloat(tDur) || 180),
         positionSeconds: Math.round(parseFloat(pPos) || 0),
         volume: parseInt(sysVol) || 75,
@@ -205,7 +216,7 @@ async function getRealMediaState() {
     }
   }
 
-  // 3. Fallback when no active music player is running
+  // 3. Fallback when no active music player is playing
   cachedMediaState = {
     trackName: 'No Active Playback',
     artist: 'Open Apple Music or Spotify on Mac',
@@ -234,7 +245,7 @@ async function getFullSpecs() {
   };
 }
 
-// Native macOS Application Launching Engine
+// Native macOS Application Launching & Macro Engine
 async function handleAction(data) {
   console.log('[MacCompanion] Executing Action:', data);
   if (!data || !data.action) return;
@@ -243,34 +254,40 @@ async function handleAction(data) {
     const target = (data.appName || '').trim();
 
     if (target === 'Music' || target === 'Apple Music') {
-      // Launch Apple Music Natively
       runCmd(`open "/System/Applications/Music.app" || open -a "Music"`);
     } else if (target === 'Antigravity') {
-      // Launch Native Antigravity App
       runCmd(`open "/Applications/Antigravity.app" || open -a "Antigravity" || open -a "Google Antigravity"`);
     } else if (target === 'WhatsApp') {
-      // Launch Native WhatsApp Desktop App
       runCmd(`open -a "WhatsApp" || open "/Applications/WhatsApp.app" || open "/Applications/‎WhatsApp.app"`);
     } else if (target === 'Visual Studio Code' || target === 'VS Code') {
-      // Launch Native VS Code
       runCmd(`open "/Applications/Visual Studio Code.app" || open -a "Visual Studio Code" || open -a "Code"`);
     } else if (target === 'GitHub' || target === 'GitHub Desktop') {
-      // Launch Native GitHub Desktop App
       runCmd(`open -a "GitHub Desktop" || open "/Applications/GitHub Desktop.app" || open "https://github.com"`);
     } else if (target === 'Gemini') {
-      // Open Gemini AI Web Portal
       runCmd(`open "https://gemini.google.com"`);
     } else if (target === 'LockMac') {
       runCmd(`pmset displaysleepnow`);
-    } else if (target === 'MuteMac') {
-      runCmd(`osascript -e "set volume output volume 0"`);
+    } else if (target === 'MuteMac' || target === 'Mute') {
+      // Toggle Mute / Unmute
+      const currentVolRaw = await runCmd(`osascript -e 'output volume of (get volume settings)'`);
+      const currentVol = parseInt(currentVolRaw) || 0;
+      if (currentVol > 0) {
+        lastMutedVolume = currentVol;
+        runCmd(`osascript -e "set volume output volume 0"`);
+      } else {
+        const restoreVol = lastMutedVolume > 0 ? lastMutedVolume : 75;
+        runCmd(`osascript -e "set volume output volume ${restoreVol}"`);
+      }
+    } else if (target === 'UnmuteMac' || target === 'Unmute') {
+      const restoreVol = lastMutedVolume > 0 ? lastMutedVolume : 75;
+      runCmd(`osascript -e "set volume output volume ${restoreVol}"`);
     } else if (target === 'Screenshot') {
-      runCmd(`screencapture -c -P`);
+      // Open Interactive Screenshot Selection Marquee Menu
+      runCmd(`screencapture -i -c || open -a "Screenshot"`);
     } else {
       runCmd(`open -a "${target}"`);
     }
   } else if (data.action === 'MEDIA_PLAY_PAUSE') {
-    // Control Apple Music Priority, then Spotify
     runCmd(`osascript -e 'tell application "Music" to playpause' || osascript -e 'tell application "Spotify" to playpause'`);
   } else if (data.action === 'MEDIA_NEXT') {
     runCmd(`osascript -e 'tell application "Music" to next track' || osascript -e 'tell application "Spotify" to next track'`);

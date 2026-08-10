@@ -506,7 +506,7 @@ input[type=range]::-webkit-slider-thumb {
 .deck-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  gap: 16px;
   flex: 1;
   align-items: stretch;
   margin: auto 0;
@@ -517,14 +517,14 @@ input[type=range]::-webkit-slider-thumb {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-glass);
-  border-radius: 28px;
-  padding: 28px;
+  border-radius: 24px;
+  padding: 18px 22px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
   position: relative;
   overflow: hidden;
 }
@@ -532,8 +532,8 @@ input[type=range]::-webkit-slider-thumb {
 .macro-card:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-glass-hover);
-  transform: translateY(-4px);
-  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
 }
 
 .macro-card:active {
@@ -547,9 +547,9 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .macro-icon-box {
-  width: 56px;
-  height: 56px;
-  border-radius: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -557,26 +557,26 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .macro-category-tag {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 1px;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 9999px;
   text-transform: uppercase;
 }
 
 .macro-card-middle {
-  margin: 16px 0;
+  margin: 10px 0;
 }
 
 .macro-title {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: #ffffff;
 }
 
 .macro-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 500;
   color: var(--text-muted);
   margin-top: 2px;
