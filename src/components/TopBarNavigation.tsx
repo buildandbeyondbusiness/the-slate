@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Compass, Moon, Sun, Settings, Monitor, Volume2 } from 'lucide-react';
+import { Compass, Moon, Sun, Settings, Monitor, Volume2, Maximize, Minimize } from 'lucide-react';
 import { ViewPage, MacSystemSpecs } from '../types';
 
 interface TopBarProps {
@@ -26,6 +26,7 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
   const [timeString, setTimeString] = useState('');
   const [dateString, setDateString] = useState('');
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -39,8 +40,27 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
+
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('fullscreenchange', handleFsChange);
+    };
   }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  };
 
   return (
     <header className="top-bar">
@@ -72,6 +92,20 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
 
       {/* Right Controls */}
       <div className="top-bar-right">
+        {/* Fullscreen Toggle */}
+        <button
+          onClick={toggleFullscreen}
+          className="glass-pill-btn"
+          style={{ padding: '8px', borderRadius: '50%', background: isFullscreen ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.07)' }}
+          title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen Kiosk Mode'}
+        >
+          {isFullscreen ? (
+            <Minimize style={{ width: '16px', height: '16px', color: '#38bdf8' }} />
+          ) : (
+            <Maximize style={{ width: '16px', height: '16px', color: '#ffffff' }} />
+          )}
+        </button>
+
         {/* Mac Status Badge */}
         <button
           onClick={onOpenSettings}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ================================================================
-#   The Slate — 1-Click USB Auto-Stream & Tablet App Launcher
+#   The Slate — 1-Click USB Auto-Stream & Kiosk Tablet Launcher
 # ================================================================
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -9,7 +9,7 @@ cd "$DIR"
 
 echo ""
 echo "================================================================"
-echo "  THE SLATE — AUTOMATIC USB TABLET STREAMER & SERVER"
+echo "  THE SLATE — AUTOMATIC USB TABLET KIOSK & SERVER"
 echo "================================================================"
 echo ""
 
@@ -28,46 +28,38 @@ PID_VITE=$!
 
 trap "kill $PID_SERVER $PID_VITE 2>/dev/null" EXIT
 
-# Give servers 2 seconds to initialize
 sleep 2
 
-# 2. ADB USB Cable Auto-Streaming to Samsung Tab
+# 2. ADB USB Cable Auto-Streaming to Samsung Tab in Fullscreen Mode
 if command -v adb &> /dev/null; then
     echo ""
     echo "🔍 Checking for connected Samsung Tab via USB Cable..."
     
-    # Check connected devices
     DEVICES=$(adb devices | grep -v "List" | grep "device")
     
     if [ -n "$DEVICES" ]; then
         echo "🔌 SAMSUNG TAB DETECTED OVER USB CABLE!"
         
-        # Reverse port forward 3000 & 3001
         echo "⚡ Forwarding ports over USB cable..."
         adb reverse tcp:3000 tcp:3000
         adb reverse tcp:3001 tcp:3001
         
-        # Wake up screen if asleep
         echo "💡 Waking up tablet screen..."
         adb shell input keyevent 224 2>/dev/null
         adb shell input keyevent 82 2>/dev/null
         
-        # Auto-launch app URL directly on tablet screen!
-        echo "📲 STREAMING APP DIRECTLY TO SAMSUNG TAB SCREEN..."
-        adb shell am start -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null
+        echo "📲 LAUNCHING THE SLATE IN FULLSCREEN MODE..."
+        # Launch Chrome with Intent Flags
+        adb shell am start -n com.android.chrome/com.google.android.apps.chrome.Main -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null || adb shell am start -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null
         
         echo ""
         echo "================================================================"
-        echo " 🎉 SUCCESS! The Slate is now streaming live to your Samsung Tab!"
-        echo "    USB Speed:  0ms latency (Direct Hardware Cable)"
-        echo "    Tablet URL: http://localhost:3000"
+        echo " 🎉 SUCCESS! Streaming live to your Samsung Tab in Fullscreen!"
+        echo "    Tap the ⛶ icon in top-right for full browser kiosk mode."
         echo "================================================================"
     else
         echo "⚠️  No USB Android device detected in 'adb devices'."
-        echo "   Please plug USB cable & enable USB Debugging on your tablet."
     fi
-else
-    echo "⚠️  ADB is not found in PATH."
 fi
 
 IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1 || echo "localhost")
