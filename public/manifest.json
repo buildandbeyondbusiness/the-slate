@@ -3,10 +3,11 @@
   "short_name": "The Slate",
   "description": "Apple StandBy + CarPlay + Stream Deck PWA for desktop tablet",
   "start_url": "./",
-  "display": "standalone",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
   "orientation": "landscape",
-  "background_color": "#05070c",
-  "theme_color": "#000000",
+  "background_color": "#0D0F10",
+  "theme_color": "#0D0F10",
   "icons": [
     {
       "src": "./icon.svg",

@@ -146,6 +146,23 @@ export function App() {
     enableHaptics: true
   });
 
+  // Global Auto-Fullscreen Trigger on First Touch / Click (No button click needed!)
+  useEffect(() => {
+    const triggerAutoFullscreen = () => {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    };
+
+    window.addEventListener('touchstart', triggerAutoFullscreen, { once: true });
+    window.addEventListener('click', triggerAutoFullscreen, { once: true });
+
+    return () => {
+      window.removeEventListener('touchstart', triggerAutoFullscreen);
+      window.removeEventListener('click', triggerAutoFullscreen);
+    };
+  }, []);
+
   useEffect(() => {
     setIpInput(macController.getMacIp());
     const unsubSpecs = macController.subscribeSpecs((specs) => {
@@ -228,9 +245,9 @@ export function App() {
 
       {/* Disconnected Mac Auto-Connect Banner */}
       {!macSpecs.isConnected && (
-        <div style={{ background: 'rgba(245, 158, 11, 0.15)', borderBottom: '1px solid rgba(245, 158, 11, 0.3)', backdropFilter: 'blur(16px)', padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', zIndex: 50, color: '#fef08a' }}>
+        <div style={{ background: 'rgba(224, 168, 78, 0.15)', borderBottom: '1px solid rgba(224, 168, 78, 0.3)', backdropFilter: 'blur(16px)', padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', zIndex: 50, color: '#F4D28A' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
-            <Wifi style={{ width: '18px', height: '18px', color: '#f59e0b' }} />
+            <Wifi style={{ width: '18px', height: '18px', color: '#E0A84E' }} />
             <span><strong>Mac Companion Offline:</strong> Enter your Mac's Wi-Fi IP (e.g. <code>192.168.0.110</code>) or run USB cable:</span>
           </div>
 
@@ -240,11 +257,11 @@ export function App() {
               value={ipInput}
               onChange={(e) => setIpInput(e.target.value)}
               placeholder="e.g. 192.168.0.110"
-              style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '12px', padding: '6px 12px', fontSize: '0.85rem', width: '150px' }}
+              style={{ background: '#171A1D', border: '1px solid #2A2F34', color: '#F1F3F4', borderRadius: '12px', padding: '6px 12px', fontSize: '0.85rem', width: '150px' }}
             />
             <button
               onClick={handleConnectIp}
-              style={{ background: '#38bdf8', color: '#0f172a', border: 'none', padding: '6px 14px', borderRadius: '12px', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ background: '#E0A84E', color: '#0D0F10', border: 'none', padding: '6px 14px', borderRadius: '12px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Zap style={{ width: '14px', height: '14px' }} />
               <span>Connect</span>
@@ -252,7 +269,7 @@ export function App() {
 
             <button
               onClick={() => macController.autoDiscoverMacIp()}
-              style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', borderRadius: '12px', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ background: '#202428', color: '#F1F3F4', border: '1px solid #2A2F34', padding: '6px 12px', borderRadius: '12px', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <RefreshCw style={{ width: '14px', height: '14px' }} />
               <span>Scan Subnet</span>
