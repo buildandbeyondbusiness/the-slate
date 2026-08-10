@@ -5,6 +5,8 @@
  * - WebSocket Server (port 3001)
  * - HTTP REST API Server (with CORS enabled for browser apps)
  * - Zero-CPU Idle Polling
+ * - Real Spotify & Apple Music Metadata & Control
+ * - Real Mac App Launching & Hardware Metrics
  */
 
 const http = require('http');
@@ -19,7 +21,6 @@ let lastCpuTimes = getCpuTimes();
 let cachedMediaState = null;
 let lastMediaFetchTime = 0;
 
-// Helper to get local Wi-Fi / Ethernet IP
 function getLocalIPs() {
   const interfaces = os.networkInterfaces();
   const ips = [];
@@ -46,9 +47,7 @@ console.log(` Open http://${primaryIp}:3000 on your Samsung Tab for 100%`);
 console.log(` instant WebSocket connection with ZERO browser security blocks!`);
 console.log(`================================================================\n`);
 
-// HTTP Server handling REST API + CORS + WebSockets
 const server = http.createServer(async (req, res) => {
-  // CORS Headers for browser cross-origin requests
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -92,7 +91,7 @@ const wss = new WebSocket.Server({ server });
 
 function runCmd(cmd) {
   return new Promise((resolve) => {
-    exec(cmd, { timeout: 2000 }, (error, stdout) => {
+    exec(cmd, { timeout: 3000 }, (error, stdout) => {
       if (error) resolve('');
       else resolve(stdout.trim());
     });
@@ -180,7 +179,7 @@ async function getRealMediaState() {
     return cachedMediaState;
   }
 
-  // 1. Check Spotify
+  // 1. Spotify
   const checkSpotify = await runCmd(`osascript -e 'if application "Spotify" is running then return "running"'`);
   if (checkSpotify === 'running') {
     const script = `
@@ -220,7 +219,7 @@ async function getRealMediaState() {
     }
   }
 
-  // 2. Check Apple Music
+  // 2. Apple Music
   const checkMusic = await runCmd(`osascript -e 'if application "Music" is running then return "running"'`);
   if (checkMusic === 'running') {
     const script = `
@@ -273,15 +272,23 @@ async function getRealMediaState() {
 }
 
 async function handleAction(data) {
-  console.log('[MacCompanion] Action:', data);
+  console.log('[MacCompanion] Action Executed:', data);
   if (data.action === 'LAUNCH_APP') {
     const appName = data.appName;
     if (appName === 'LockMac') {
       runCmd(`pmset displaysleepnow`);
+    } else if (appName === 'SleepMac') {
+      runCmd(`osascript -e 'tell application "System Events" to sleep'`);
     } else if (appName === 'MuteMic') {
       runCmd(`osascript -e "set volume input volume 0"`);
+    } else if (appName === 'UnmuteMic') {
+      runCmd(`osascript -e "set volume input volume 100"`);
+    } else if (appName === 'MuteAudio') {
+      runCmd(`osascript -e "set volume output volume 0"`);
     } else if (appName === 'LaunchDev') {
       runCmd(`open -a "Visual Studio Code" && open -a "Terminal"`);
+    } else if (appName === 'Screenshot') {
+      runCmd(`screencapture -c`);
     } else {
       runCmd(`open -a "${appName}"`);
     }
@@ -309,7 +316,7 @@ wss.on('connection', (ws) => {
       const data = JSON.parse(message);
       await handleAction(data);
     } catch (err) {
-      console.error('[MacCompanion] WS Message Error:', err);
+      console.error('[MacCompanion] WS Error:', err);
     }
   });
 });
@@ -341,5 +348,5 @@ setInterval(() => {
 }, 1200);
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on all interfaces on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });

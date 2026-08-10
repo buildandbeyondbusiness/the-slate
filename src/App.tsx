@@ -32,7 +32,7 @@ const INITIAL_CARDS: StreamDeckCard[] = [
   },
   {
     id: 'card_arc',
-    title: 'Arc / Safari',
+    title: 'Arc Browser',
     subtitle: 'Web Browser',
     iconName: 'Globe',
     category: 'app',
@@ -61,6 +61,36 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     badgeText: 'DESIGN'
   },
   {
+    id: 'card_notion',
+    title: 'Notion',
+    subtitle: 'Notes & Workspace',
+    iconName: 'Layers',
+    category: 'app',
+    targetAppOrCommand: 'Notion',
+    accentColor: '#a855f7',
+    badgeText: 'NOTES'
+  },
+  {
+    id: 'card_launch_dev',
+    title: 'Launch Dev Stack',
+    subtitle: 'VS Code + Terminal',
+    iconName: 'Code',
+    category: 'macro',
+    targetAppOrCommand: 'LaunchDev',
+    accentColor: '#38bdf8',
+    badgeText: 'DEV'
+  },
+  {
+    id: 'card_mute_mic',
+    title: 'Mute Mic',
+    subtitle: 'Audio Privacy',
+    iconName: 'VolumeX',
+    category: 'macro',
+    targetAppOrCommand: 'MuteMic',
+    accentColor: '#f43f5e',
+    badgeText: 'AUDIO'
+  },
+  {
     id: 'card_lock',
     title: 'Lock Mac',
     subtitle: 'Sleep Screen',
@@ -84,25 +114,25 @@ export function App() {
   const [cards, setCards] = useState<StreamDeckCard[]>(INITIAL_CARDS);
 
   const [macSpecs, setMacSpecs] = useState<MacSystemSpecs>({
-    cpuUsage: 28,
-    gpuUsage: 14,
-    memoryUsedGB: 7.8,
+    cpuUsage: 0,
+    gpuUsage: 0,
+    memoryUsedGB: 0,
     memoryTotalGB: 16.0,
-    memoryPercentage: 48,
-    macName: "Sidhh's Mac",
+    memoryPercentage: 0,
+    macName: "Connecting to Mac...",
     isConnected: false
   });
 
   const [mediaState, setMediaState] = useState<MediaTrackState>({
-    trackName: 'Blinding Lights',
-    artist: 'The Weeknd',
-    album: 'After Hours',
+    trackName: 'Waiting for Mac Connection...',
+    artist: 'Open Spotify or Apple Music on Mac',
+    album: 'Mac Integration',
     albumArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80',
-    isPlaying: true,
-    durationSeconds: 200,
-    positionSeconds: 65,
-    volume: 80,
-    sourceApp: 'Spotify'
+    isPlaying: false,
+    durationSeconds: 180,
+    positionSeconds: 0,
+    volume: 75,
+    sourceApp: 'System'
   });
 
   const [config, setConfig] = useState<SettingsConfig>({
@@ -129,7 +159,6 @@ export function App() {
     };
   }, []);
 
-  // Touch Swipe Gesture for Tablet Page Switch
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -175,7 +204,6 @@ export function App() {
       onTouchEnd={handleTouchEnd}
       className={`app-container ${nightMode ? 'night-mode' : ''}`}
     >
-      {/* Top Navigation */}
       <TopBarNavigation
         currentPage={currentPage}
         onPageChange={setCurrentPage}
@@ -187,7 +215,6 @@ export function App() {
         onVolumeChange={(vol) => macController.setVolume(vol)}
       />
 
-      {/* Main Content Area */}
       <main className="main-content">
         {currentPage === 'standby' ? (
           <StandbyScreen
@@ -214,7 +241,6 @@ export function App() {
         )}
       </main>
 
-      {/* Modals & Toast */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -225,7 +251,7 @@ export function App() {
           macController.setMacAddress(newCfg.macHostIp, newCfg.macPort);
         }}
         macSpecs={macSpecs}
-        onReconnectMac={() => macController.connectWebSocket()}
+        onReconnectMac={() => macController.connect()}
       />
 
       <MusicDetailModal
