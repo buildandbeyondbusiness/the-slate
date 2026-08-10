@@ -43,16 +43,15 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
         <img 
           src={card.iconUrl} 
           alt={card.title} 
-          style={{ width: '26px', height: '26px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} 
+          style={{ width: '38px', height: '38px', objectFit: 'contain', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.35))' }} 
           onError={(e) => {
-            // Fallback to Lucide if image fails to load
             (e.target as HTMLElement).style.display = 'none';
           }}
         />
       );
     }
 
-    const style = { width: '24px', height: '24px', color: card.accentColor };
+    const style = { width: '28px', height: '28px', color: card.accentColor };
     switch (card.iconName) {
       case 'Code': return <Code style={style} />;
       case 'Terminal': return <Terminal style={style} />;
@@ -74,12 +73,12 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
 
   return (
     <div className="stream-deck-container">
-      {/* Top Deck Pill Bar */}
+      {/* Top Deck Header Bar */}
       <div className="deck-header">
         <div className="deck-tabs-left">
           {/* Music Pill */}
           <button onClick={onOpenMusicModal} className="glass-pill-btn" title="Open Music Player">
-            <Music style={{ width: '18px', height: '18px', color: '#f43f5e' }} />
+            <Music style={{ width: '18px', height: '18px', color: '#E0A84E' }} />
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
               <span style={{ fontWeight: 800 }}>Music</span>
               <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -88,14 +87,14 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
             </div>
           </button>
 
-          {/* Buttons Pill */}
+          {/* Edit Mode Button */}
           <button
             onClick={() => setIsEditMode(!isEditMode)}
             className="glass-pill-btn"
             style={{ background: isEditMode ? 'rgba(224, 168, 78, 0.2)' : 'var(--bg-elevated)', borderColor: isEditMode ? '#E0A84E' : 'var(--border-glass)' }}
           >
             {isEditMode ? <Check style={{ width: '16px', height: '16px', color: '#69C58A' }} /> : <Edit3 style={{ width: '16px', height: '16px', color: '#E0A84E' }} />}
-            <span>{isEditMode ? 'Done Editing' : 'Buttons'}</span>
+            <span>{isEditMode ? 'Done' : 'Edit Shortcuts'}</span>
           </button>
         </div>
 
@@ -104,21 +103,21 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
           <button
             onClick={() => setActiveTab('all')}
             className={`glass-pill-btn ${activeTab === 'all' ? 'active' : ''}`}
-            style={{ padding: '4px 14px', fontSize: '0.75rem' }}
+            style={{ padding: '4px 16px', fontSize: '0.8rem' }}
           >
-            All Shortcuts
+            All
           </button>
           <button
             onClick={() => setActiveTab('apps')}
             className={`glass-pill-btn ${activeTab === 'apps' ? 'active' : ''}`}
-            style={{ padding: '4px 14px', fontSize: '0.75rem' }}
+            style={{ padding: '4px 16px', fontSize: '0.8rem' }}
           >
-            Mac Apps
+            Apps
           </button>
           <button
             onClick={() => setActiveTab('macros')}
             className={`glass-pill-btn ${activeTab === 'macros' ? 'active' : ''}`}
-            style={{ padding: '4px 14px', fontSize: '0.75rem' }}
+            style={{ padding: '4px 16px', fontSize: '0.8rem' }}
           >
             Macros
           </button>
@@ -127,11 +126,11 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
         {/* Add Shortcut */}
         <button onClick={() => onOpenButtonEditor()} className="glass-pill-btn" style={{ borderColor: '#E0A84E', color: '#E0A84E' }}>
           <Plus style={{ width: '16px', height: '16px' }} />
-          <span>Add Shortcut</span>
+          <span>Add</span>
         </button>
       </div>
 
-      {/* 3x3 Stream Deck Grid with Authentic 3D iOS App Icons */}
+      {/* Clean, Decluttered Stream Deck Grid (Icon + Title + Subtitle ONLY) */}
       <div className="deck-grid">
         {filteredCards.map((card) => (
           <div
@@ -144,25 +143,38 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
               }
             }}
             className="macro-card"
+            style={{
+              padding: '20px 24px',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: '18px',
+              border: isEditMode ? '1px dashed #E0A84E' : '1px solid var(--border-glass)'
+            }}
           >
-            <div className="macro-card-top">
-              <div className="macro-icon-box" style={{ background: `${card.accentColor}18`, borderColor: `${card.accentColor}35` }}>
-                {renderCardIcon(card)}
+            {/* High-Res 3D Icon */}
+            <div 
+              style={{ 
+                width: '52px', 
+                height: '52px', 
+                borderRadius: '14px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              {renderCardIcon(card)}
+            </div>
+
+            {/* Clean Title & Subtitle */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#F1F3F4', letterSpacing: '-0.3px' }}>
+                {card.title}
               </div>
-
-              <span className="macro-category-tag" style={{ background: `${card.accentColor}18`, color: card.accentColor }}>
-                {card.badgeText || card.category}
-              </span>
-            </div>
-
-            <div className="macro-card-middle">
-              <div className="macro-title">{card.title}</div>
-              <div className="macro-subtitle">{card.subtitle}</div>
-            </div>
-
-            <div className="macro-card-bottom">
-              <span>{isEditMode ? 'Click to Edit' : 'Launch Mac Shortcut'}</span>
-              <span style={{ color: card.accentColor, fontWeight: 'bold' }}>→</span>
+              <div style={{ fontSize: '0.82rem', fontWeight: 500, color: '#8B9299', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {card.subtitle}
+              </div>
             </div>
           </div>
         ))}
@@ -170,8 +182,8 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
 
       {/* Bottom Right Settings Button */}
       <div className="deck-footer">
-        <button onClick={onOpenSettings} className="glass-pill-btn" style={{ padding: '12px 24px', fontSize: '0.9rem' }}>
-          <Settings style={{ width: '20px', height: '20px', color: '#E0A84E' }} />
+        <button onClick={onOpenSettings} className="glass-pill-btn" style={{ padding: '10px 20px', fontSize: '0.85rem' }}>
+          <Settings style={{ width: '18px', height: '18px', color: '#E0A84E' }} />
           <span style={{ fontWeight: 700 }}>Settings</span>
         </button>
       </div>
