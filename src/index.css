@@ -165,7 +165,8 @@ html, body, #root {
   height: calc(100vh - 60px);
   padding: 20px 28px;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* StandBy Screen Layout (Page 1) */
