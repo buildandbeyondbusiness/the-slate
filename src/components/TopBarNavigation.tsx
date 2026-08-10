@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Compass, Moon, Sun, Settings, Monitor, Volume2, Maximize, Minimize } from 'lucide-react';
+import { Compass, Moon, Sun, Settings, Monitor, Volume2, Maximize, Minimize, Zap, Battery } from 'lucide-react';
 import { ViewPage, MacSystemSpecs } from '../types';
 
 interface TopBarProps {
@@ -62,6 +62,26 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
     }
   };
 
+  // Apple Watch Ultra Circular Battery Widget Logic
+  const battLevel = macSpecs.batteryLevel ?? 80;
+  const isCharging = macSpecs.isCharging ?? true;
+  const isLowPower = macSpecs.isLowPower ?? (battLevel <= 20);
+
+  // Dynamic Color
+  let ringColor = '#34c759'; // Apple Green
+  if (isCharging) {
+    ringColor = '#34c759'; // Apple Green
+  } else if (battLevel <= 15) {
+    ringColor = '#ef4444'; // Red
+  } else if (isLowPower || battLevel <= 20) {
+    ringColor = '#f59e0b'; // Amber Yellow
+  }
+
+  // SVG Circumference math (r = 13, circumference = 2 * PI * 13 = 81.68)
+  const radius = 13;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (battLevel / 100) * circumference;
+
   return (
     <header className="top-bar">
       {/* Left: Compass / Navigation Switcher */}
@@ -71,7 +91,7 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
           className="glass-pill-btn"
           title="Switch between StandBy View & Stream Deck Grid"
         >
-          <div className="icon-badge" style={{ background: currentPage === 'standby' ? 'rgba(56,189,248,0.2)' : 'rgba(244,63,94,0.2)', color: currentPage === 'standby' ? '#38bdf8' : '#f43f5e' }}>
+          <div className="icon-badge" style={{ background: currentPage === 'standby' ? 'rgba(224,168,78,0.2)' : 'rgba(105,197,138,0.2)', color: currentPage === 'standby' ? '#E0A84E' : '#69C58A' }}>
             <Compass style={{ width: '18px', height: '18px' }} />
           </div>
           <span>{currentPage === 'standby' ? 'Standby Screen' : 'Stream Deck'}</span>
@@ -92,6 +112,63 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
 
       {/* Right Controls */}
       <div className="top-bar-right">
+        
+        {/*  APPLE WATCH ULTRA CIRCULAR BATTERY WIDGET (USER PHOTO MATCH!) */}
+        <button
+          onClick={onOpenSettings}
+          className="glass-pill-btn"
+          style={{ padding: '4px 12px', height: '38px', borderRadius: '9999px', border: `1px solid ${ringColor}40`, background: 'rgba(23, 26, 29, 0.7)' }}
+          title={`Mac Battery: ${battLevel}% ${isCharging ? '(Charging ⚡)' : isLowPower ? '(Low Power Mode 🟡)' : ''}`}
+        >
+          <div style={{ position: 'relative', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="32" height="32" viewBox="0 0 32 32" style={{ transform: 'rotate(-90deg)' }}>
+              {/* Background Ring Track */}
+              <circle
+                cx="16"
+                cy="16"
+                r={radius}
+                fill="transparent"
+                stroke="rgba(255, 255, 255, 0.12)"
+                strokeWidth="3.5"
+              />
+              {/* Active Battery Progress Ring */}
+              <circle
+                cx="16"
+                cy="16"
+                r={radius}
+                fill="transparent"
+                stroke={ringColor}
+                strokeWidth="3.5"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                style={{
+                  transition: 'stroke-dashoffset 0.6s ease, stroke 0.4s ease',
+                  filter: `drop-shadow(0 0 4px ${ringColor})`
+                }}
+              />
+            </svg>
+
+            {/* Center Icon */}
+            <div style={{ position: 'absolute', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {isCharging ? (
+                <Zap style={{ width: '13px', height: '13px', color: ringColor, fill: ringColor }} />
+              ) : (
+                <span style={{ fontSize: '0.62rem', fontWeight: 900, color: ringColor, fontFamily: '"Outfit", sans-serif' }}>
+                  {battLevel}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: '4px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#F1F3F4', lineHeight: 1 }}>{battLevel}%</span>
+            <span style={{ fontSize: '0.62rem', fontWeight: 600, color: ringColor, marginTop: '2px' }}>
+              {isCharging ? 'CHARGING' : isLowPower ? 'LOW POWER' : 'BATTERY'}
+            </span>
+          </div>
+        </button>
+
         {/* Fullscreen Toggle Button */}
         <button
           id="fullscreen-btn"
@@ -114,7 +191,7 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
           title={macSpecs.isConnected ? `Connected to ${macSpecs.macName}` : 'Click to connect Mac Companion Server'}
         >
           <Monitor style={{ width: '16px', height: '16px', color: '#94a3b8' }} />
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: macSpecs.isConnected ? '#10b981' : '#f59e0b', boxShadow: macSpecs.isConnected ? '0 0 10px #10b981' : 'none' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: macSpecs.isConnected ? '#69C58A' : '#E0A84E', boxShadow: macSpecs.isConnected ? '0 0 10px #69C58A' : 'none' }} />
           <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>{macSpecs.isConnected ? 'Mac Live' : 'Simulated'}</span>
         </button>
 
@@ -130,7 +207,7 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
           </button>
 
           {showVolumeSlider && (
-            <div style={{ position: 'absolute', top: '48px', right: 0, background: '#0f172a', border: '1px solid rgba(255,255,255,0.2)', padding: '12px 16px', borderRadius: '20px', width: '200px', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 60, boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+            <div style={{ position: 'absolute', top: '48px', right: 0, background: '#171A1D', border: '1px solid rgba(255,255,255,0.2)', padding: '12px 16px', borderRadius: '20px', width: '200px', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 60, boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
               <Volume2 style={{ width: '16px', height: '16px', color: '#94a3b8' }} />
               <input
                 type="range"
@@ -148,7 +225,7 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
         <button
           onClick={onToggleNightMode}
           className="glass-pill-btn"
-          style={{ padding: '8px', borderRadius: '50%', background: nightMode ? 'rgba(244, 63, 94, 0.3)' : 'rgba(255, 255, 255, 0.07)', color: nightMode ? '#f43f5e' : '#ffffff' }}
+          style={{ padding: '8px', borderRadius: '50%', background: nightMode ? 'rgba(217, 108, 108, 0.3)' : 'rgba(255, 255, 255, 0.07)', color: nightMode ? '#D96C6C' : '#ffffff' }}
           title="Toggle StandBy Night Red Mode"
         >
           {nightMode ? <Moon style={{ width: '16px', height: '16px' }} /> : <Sun style={{ width: '16px', height: '16px' }} />}

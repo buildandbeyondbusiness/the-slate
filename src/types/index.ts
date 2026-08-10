@@ -6,6 +6,9 @@ export interface MacSystemSpecs {
   memoryUsedGB: number;
   memoryTotalGB: number;
   memoryPercentage: number;
+  batteryLevel?: number; // 0 - 100%
+  isCharging?: boolean;
+  isLowPower?: boolean;
   macName: string;
   isConnected: boolean;
 }
