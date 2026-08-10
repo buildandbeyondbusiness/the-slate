@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#020617" />
+      <stop offset="100%" stop-color="#1e1b4b" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+    <linearGradient id="redGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e" />
+      <stop offset="100%" stop-color="#e11d48" />
+    </linearGradient>
+    <filter id="blurFilter">
+      <feGaussianBlur stdDeviation="12" />
+    </filter>
+  </defs>
+
+  <!-- Base background card -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  
+  <!-- Glowing backdrops -->
+  <circle cx="160" cy="180" r="140" fill="url(#glowGrad)" opacity="0.35" filter="url(#blurFilter)" />
+  <circle cx="360" cy="340" r="120" fill="url(#redGlow)" opacity="0.3" filter="url(#blurFilter)" />
+
+  <!-- Glass Card Outline -->
+  <rect x="56" y="56" width="400" height="400" rx="80" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4" />
+
+  <!-- StandBy Clock Graphic -->
+  <text x="140" y="240" font-family="-apple-system, SF Pro Display, Inter, sans-serif" font-size="96" font-weight="800" fill="#ffffff" letter-spacing="-2">02:15</text>
+
+  <!-- Stream Deck Grid Graphic -->
+  <rect x="140" y="280" width="64" height="64" rx="18" fill="rgba(255, 255, 255, 0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+  <rect x="224" y="280" width="64" height="64" rx="18" fill="rgba(56, 189, 248, 0.3)" stroke="#38bdf8" stroke-width="2" />
+  <rect x="308" y="280" width="64" height="64" rx="18" fill="rgba(244, 63, 94, 0.3)" stroke="#f43f5e" stroke-width="2" />
+  
+  <rect x="140" y="360" width="64" height="64" rx="18" fill="rgba(129, 140, 248, 0.3)" stroke="#818cf8" stroke-width="2" />
+  <rect x="224" y="360" width="64" height="64" rx="18" fill="rgba(255, 255, 255, 0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+  <rect x="308" y="360" width="64" height="64" rx="18" fill="rgba(255, 255, 255, 0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+</svg>
