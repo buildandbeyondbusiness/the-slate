@@ -34,7 +34,7 @@ trap "kill $PID_SERVER $PID_VITE 2>/dev/null" EXIT
 
 sleep 2
 
-# 2. ADB USB Cable Auto-Streaming to Samsung Tab in Fullscreen Mode
+# 2. ADB USB Cable Auto-Streaming to Samsung Tab
 if command -v adb &> /dev/null; then
     echo ""
     echo "🔍 Checking for connected Samsung Tab via USB Cable..."
@@ -54,15 +54,6 @@ if command -v adb &> /dev/null; then
         
         echo "📲 LAUNCHING THE SLATE..."
         adb shell am start -n com.android.chrome/com.google.android.apps.chrome.Main -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null || adb shell am start -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null
-        
-        # 3. Simulate physical finger press on the Fullscreen button coordinates on Samsung Tab!
-        (
-          sleep 3
-          echo "👇 Simulating physical finger press on Fullscreen button..."
-          adb shell input tap 1140 35 2>/dev/null || true
-          sleep 1
-          adb shell input tap 660 35 2>/dev/null || true
-        ) &
 
         echo ""
         echo "================================================================"
