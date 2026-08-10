@@ -52,16 +52,12 @@ if command -v adb &> /dev/null; then
         adb shell input keyevent 224 2>/dev/null
         adb shell input keyevent 82 2>/dev/null
         
-        echo "📲 LAUNCHING THE SLATE IN FULLSCREEN MODE..."
+        echo "⚡ Enabling System-Level Immersive Fullscreen Mode on Samsung Tab..."
+        adb shell settings put global policy_control immersive.full=com.android.chrome 2>/dev/null || true
+
+        echo "📲 LAUNCHING THE SLATE IN IMMERSIVE FULLSCREEN MODE..."
         adb shell am start -n com.android.chrome/com.google.android.apps.chrome.Main -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null || adb shell am start -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null
         
-        # 4-Second Hardcoded Auto-Click Fullscreen Trigger
-        (
-          sleep 4
-          echo "⚡ 4 Seconds elapsed: Triggering Fullscreen Auto-Click on Samsung Tab..."
-          adb shell input keyevent 170 2>/dev/null || true
-        ) &
-
         echo ""
         echo "================================================================"
         echo " 🎉 SUCCESS! Streaming live to your Samsung Tab in Fullscreen!"

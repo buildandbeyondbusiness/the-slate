@@ -36,8 +36,6 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
   const [dayAbbr, setDayAbbr] = useState('WED');
   const [dayNum, setDayNum] = useState('26');
 
-  const [touchStartY, setTouchStartY] = useState<number | null>(null);
-
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -68,30 +66,6 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     return `${m}:${String(s).padStart(2, '0')}`;
-  };
-
-  // Swiping Up / Down on Clock Face to Cycle Clock Styles (Apple Smart Stack)
-  const handleClockTouchStart = (e: React.TouchEvent) => {
-    setTouchStartY(e.touches[0].clientY);
-  };
-
-  const handleClockTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartY === null) return;
-    const touchEndY = e.changedTouches[0].clientY;
-    const diffY = touchStartY - touchEndY;
-
-    if (Math.abs(diffY) > 35) {
-      const styles: ClockStyle[] = ['curvy-apple', 'pill-blocks', 'minimal-hero', 'playful-colors', 'stacked', 'world'];
-      const currIdx = styles.indexOf(clockStyle);
-      if (diffY > 0) {
-        const nextStyle = styles[(currIdx + 1) % styles.length];
-        onClockStyleChange(nextStyle);
-      } else {
-        const prevStyle = styles[(currIdx - 1 + styles.length) % styles.length];
-        onClockStyleChange(prevStyle);
-      }
-    }
-    setTouchStartY(null);
   };
 
   const renderClockDisplay = () => {
@@ -256,10 +230,8 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
       {/* LEFT PANEL: Swappable Apple Standby Clock Widget         */}
       {/* ======================================================== */}
       <div 
-        onTouchStart={handleClockTouchStart}
-        onTouchEnd={handleClockTouchEnd}
         className="glass-card hero-clock-card"
-        style={{ cursor: 'pointer', position: 'relative' }}
+        style={{ position: 'relative' }}
       >
         {/* Top Header */}
         <div className="card-top-row">
@@ -271,10 +243,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
               {(['curvy-apple', 'pill-blocks', 'minimal-hero', 'playful-colors', 'stacked', 'world'] as ClockStyle[]).map((st) => (
                 <button
                   key={st}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onClockStyleChange(st);
-                  }}
+                  onClick={() => onClockStyleChange(st)}
                   style={{
                     width: '6px',
                     height: '6px',
@@ -306,7 +275,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
         <div className="card-bottom-row">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#69C58A' }} />
-            <span>Swipe ↑↓ to Change Clock Design</span>
+            <span>Apple StandBy Mode</span>
           </div>
           <span style={{ color: clockColor, fontWeight: 700 }}>{clockStyle.toUpperCase()}</span>
         </div>
@@ -363,7 +332,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
           </div>
         </div>
 
-        {/* Music Player Widget (TAPPING OPENS FULL CARPLAY MUSIC MODAL!) */}
+        {/* Music Player Widget */}
         <div 
           onClick={onOpenMusicModal}
           className="glass-card music-player-card"
