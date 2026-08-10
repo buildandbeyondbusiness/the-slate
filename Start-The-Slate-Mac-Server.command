@@ -52,15 +52,21 @@ if command -v adb &> /dev/null; then
         adb shell input keyevent 224 2>/dev/null
         adb shell input keyevent 82 2>/dev/null
         
-        echo "⚡ Enabling System-Level Immersive Fullscreen Mode on Samsung Tab..."
-        adb shell settings put global policy_control immersive.full=com.android.chrome 2>/dev/null || true
-
-        echo "📲 LAUNCHING THE SLATE IN IMMERSIVE FULLSCREEN MODE..."
+        echo "📲 LAUNCHING THE SLATE..."
         adb shell am start -n com.android.chrome/com.google.android.apps.chrome.Main -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null || adb shell am start -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null
         
+        # 3. Simulate physical finger press on the Fullscreen button coordinates on Samsung Tab!
+        (
+          sleep 3
+          echo "👇 Simulating physical finger press on Fullscreen button..."
+          adb shell input tap 1140 35 2>/dev/null || true
+          sleep 1
+          adb shell input tap 660 35 2>/dev/null || true
+        ) &
+
         echo ""
         echo "================================================================"
-        echo " 🎉 SUCCESS! Streaming live to your Samsung Tab in Fullscreen!"
+        echo " 🎉 SUCCESS! Streaming live to your Samsung Tab!"
         echo "    Real-Time Music Sync: ACTIVE (Apple Music & Spotify)"
         echo "================================================================"
     else
