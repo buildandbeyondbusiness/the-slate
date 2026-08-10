@@ -8,6 +8,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { MusicDetailModal } from './components/MusicDetailModal';
 import { ButtonEditorModal } from './components/ButtonEditorModal';
 import { ToastNotification } from './components/ToastNotification';
+import { Wifi, RefreshCw, Zap } from 'lucide-react';
 
 const INITIAL_CARDS: StreamDeckCard[] = [
   {
@@ -112,6 +113,7 @@ export function App() {
   
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [cards, setCards] = useState<StreamDeckCard[]>(INITIAL_CARDS);
+  const [ipInput, setIpInput] = useState('');
 
   const [macSpecs, setMacSpecs] = useState<MacSystemSpecs>({
     cpuUsage: 0,
@@ -145,7 +147,10 @@ export function App() {
   });
 
   useEffect(() => {
-    const unsubSpecs = macController.subscribeSpecs(setMacSpecs);
+    setIpInput(macController.getMacIp());
+    const unsubSpecs = macController.subscribeSpecs((specs) => {
+      setMacSpecs(specs);
+    });
     const unsubMedia = macController.subscribeMedia(setMediaState);
     const unsubToast = macController.subscribeToast((msg) => {
       setToastMessage(msg);
@@ -198,6 +203,12 @@ export function App() {
     setCards((prev) => prev.filter((c) => c.id !== cardId));
   };
 
+  const handleConnectIp = () => {
+    if (ipInput.trim()) {
+      macController.setMacAddress(ipInput.trim());
+    }
+  };
+
   return (
     <div 
       onTouchStart={handleTouchStart}
@@ -214,6 +225,41 @@ export function App() {
         volume={mediaState.volume}
         onVolumeChange={(vol) => macController.setVolume(vol)}
       />
+
+      {/* Disconnected Mac Auto-Connect Banner */}
+      {!macSpecs.isConnected && (
+        <div style={{ background: 'rgba(245, 158, 11, 0.15)', borderBottom: '1px solid rgba(245, 158, 11, 0.3)', backdropFilter: 'blur(16px)', padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', zIndex: 50, color: '#fef08a' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
+            <Wifi style={{ width: '18px', height: '18px', color: '#f59e0b' }} />
+            <span><strong>Mac Companion Offline:</strong> Enter your Mac's Wi-Fi IP (e.g. <code>192.168.0.110</code>) or run USB cable:</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <input
+              type="text"
+              value={ipInput}
+              onChange={(e) => setIpInput(e.target.value)}
+              placeholder="e.g. 192.168.0.110"
+              style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '12px', padding: '6px 12px', fontSize: '0.85rem', width: '150px' }}
+            />
+            <button
+              onClick={handleConnectIp}
+              style={{ background: '#38bdf8', color: '#0f172a', border: 'none', padding: '6px 14px', borderRadius: '12px', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Zap style={{ width: '14px', height: '14px' }} />
+              <span>Connect</span>
+            </button>
+
+            <button
+              onClick={() => macController.autoDiscoverMacIp()}
+              style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', borderRadius: '12px', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <RefreshCw style={{ width: '14px', height: '14px' }} />
+              <span>Scan Subnet</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="main-content">
         {currentPage === 'standby' ? (

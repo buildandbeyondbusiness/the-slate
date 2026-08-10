@@ -9,7 +9,7 @@ class MacControllerService {
   private macIp: string = 'localhost';
   private port: number = 3001;
   private isConnected: boolean = false;
-  private reconnectTimer: any = null;
+  private isScanning: boolean = false;
   private httpPollTimer: any = null;
 
   private onSystemSpecsListeners: Set<SystemSpecsCallback> = new Set();
@@ -34,21 +34,35 @@ class MacControllerService {
     memoryUsedGB: 0,
     memoryTotalGB: 16.0,
     memoryPercentage: 0,
-    macName: 'Connecting to Mac...',
+    macName: 'Mac Disconnected',
     isConnected: false
   };
 
   constructor() {
     const savedIp = localStorage.getItem('slate_mac_ip');
+    const hostname = window.location.hostname;
+    
+    // Valid local IP check (not GitHub Pages or external domain)
+    const isLocalHostname = hostname === 'localhost' || 
+                           hostname === '127.0.0.1' || 
+                           /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(hostname);
+
     if (savedIp) {
       this.macIp = savedIp;
-    } else if (window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      this.macIp = window.location.hostname;
+    } else if (isLocalHostname) {
+      this.macIp = hostname;
     } else {
       this.macIp = 'localhost';
     }
 
     this.connect();
+    
+    // Auto-discover Mac IP on local network if not connected after 1.5 seconds
+    setTimeout(() => {
+      if (!this.isConnected) {
+        this.autoDiscoverMacIp();
+      }
+    }, 1500);
   }
 
   public setMacAddress(ip: string, port: number = 3001) {
@@ -65,6 +79,51 @@ class MacControllerService {
   public connect() {
     this.connectWebSocket();
     this.startHttpPolling();
+  }
+
+  // Local Wi-Fi Subnet Auto-Discovery Engine
+  public async autoDiscoverMacIp() {
+    if (this.isConnected || this.isScanning) return;
+    this.isScanning = true;
+    this.notifyToast("🔍 Auto-scanning local network for Mac companion server...");
+
+    // Try common candidates first
+    const candidates = ['localhost', '127.0.0.1', '192.168.0.110', '192.168.0.100', '192.168.1.100', '192.168.1.110'];
+    for (const ip of candidates) {
+      if (await this.tryHttpIp(ip)) {
+        this.macIp = ip;
+        localStorage.setItem('slate_mac_ip', ip);
+        this.isScanning = false;
+        return;
+      }
+    }
+
+    // Scan subnets 192.168.0.X and 192.168.1.X in parallel batches
+    const subnets = ['192.168.0', '192.168.1'];
+    for (const subnet of subnets) {
+      const pings: Promise<string | null>[] = [];
+      for (let i = 2; i < 254; i++) {
+        const testIp = `${subnet}.${i}`;
+        pings.push(
+          fetch(`http://${testIp}:${this.port}/ping`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(800)
+          })
+            .then(res => res.ok ? testIp : null)
+            .catch(() => null)
+        );
+      }
+
+      const results = await Promise.all(pings);
+      const foundIp = results.find(ip => ip !== null);
+      if (foundIp) {
+        this.setMacAddress(foundIp, this.port);
+        this.isScanning = false;
+        return;
+      }
+    }
+
+    this.isScanning = false;
   }
 
   private connectWebSocket() {
@@ -113,20 +172,13 @@ class MacControllerService {
   }
 
   private async fetchHttpState() {
-    // 1. Try saved / configured IP
-    let success = await this.tryHttpIp(this.macIp);
-    
-    // 2. If failed and macIp is localhost, try common local subnet IP if saved
-    if (!success && this.macIp !== 'localhost') {
-      success = await this.tryHttpIp('localhost');
-    }
-
+    const success = await this.tryHttpIp(this.macIp);
     if (!success) {
       this.isConnected = false;
       this.systemSpecs = {
         ...this.systemSpecs,
         isConnected: false,
-        macName: `Mac Server Offline (${this.macIp})`
+        macName: `Mac Offline (${this.macIp})`
       };
       this.notifySpecs();
     }
@@ -137,11 +189,13 @@ class MacControllerService {
       const res = await fetch(`http://${ip}:${this.port}/api/state`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(1800)
+        signal: AbortSignal.timeout(1200)
       });
       if (res.ok) {
         const data = await res.json();
         if (data.systemSpecs && data.mediaState) {
+          this.macIp = ip;
+          localStorage.setItem('slate_mac_ip', ip);
           this.systemSpecs = { ...data.systemSpecs, isConnected: true };
           this.mediaState = { ...data.mediaState };
           this.setConnectedState(true, `Connected to Mac (${ip})`);
@@ -172,15 +226,13 @@ class MacControllerService {
     this.notifySpecs();
   }
 
-  // 3-Tier Guaranteed Action Delivery Pipeline
+  // 3-Tier Guaranteed Action Delivery (WS -> HTTP POST -> GET Image Beacon)
   public async sendAction(payload: any) {
-    // Tier 1: WebSocket
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(payload));
       return;
     }
 
-    // Tier 2: HTTP POST
     try {
       await fetch(`http://${this.macIp}:${this.port}/api/action`, {
         method: 'POST',
@@ -190,7 +242,6 @@ class MacControllerService {
       return;
     } catch (e) {}
 
-    // Tier 3: GET Image Beacon (Unblocked by CORS / Mixed Content)
     try {
       const queryParams = new URLSearchParams();
       if (payload.action) queryParams.set('action', payload.action);
