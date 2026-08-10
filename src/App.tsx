@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ViewPage, MacSystemSpecs, MediaTrackState, StreamDeckCard, SettingsConfig } from './types';
+import { ViewPage, MacSystemSpecs, MediaTrackState, StreamDeckCard, SettingsConfig, ClockStyle } from './types';
 import { macController } from './services/macController';
 import { TopBarNavigation } from './components/TopBarNavigation';
-import { StandbyScreen, ClockStyle } from './components/StandbyScreen';
+import { StandbyScreen } from './components/StandbyScreen';
 import { StreamDeckScreen } from './components/StreamDeckScreen';
 import { SettingsModal } from './components/SettingsModal';
 import { MusicDetailModal } from './components/MusicDetailModal';
@@ -120,9 +120,13 @@ export function App() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<StreamDeckCard | undefined>(undefined);
   
-  // Persisted Apple Standby Clock Style
+  // Persisted Apple Standby Clock Style & Color Accent
   const [clockStyle, setClockStyle] = useState<ClockStyle>(() => {
-    return (localStorage.getItem('the_slate_clock_style') as ClockStyle) || 'minimal-hero';
+    return (localStorage.getItem('the_slate_clock_style') as ClockStyle) || 'curvy-apple';
+  });
+
+  const [clockColor, setClockColor] = useState<string>(() => {
+    return localStorage.getItem('the_slate_clock_color') || '#E0A84E';
   });
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -157,12 +161,19 @@ export function App() {
     autoConnect: true,
     nightMode: false,
     standbyTheme: 'glass',
+    clockStyle: clockStyle,
+    clockColor: clockColor,
     enableHaptics: true
   });
 
   const handleClockStyleChange = (newStyle: ClockStyle) => {
     setClockStyle(newStyle);
     localStorage.setItem('the_slate_clock_style', newStyle);
+  };
+
+  const handleClockColorChange = (newColor: string) => {
+    setClockColor(newColor);
+    localStorage.setItem('the_slate_clock_color', newColor);
   };
 
   // 3-Second Automatic Fullscreen Trigger Timer after server/page loads!
@@ -273,7 +284,7 @@ export function App() {
       {!macSpecs.isConnected && (
         <div style={{ background: 'rgba(224, 168, 78, 0.15)', borderBottom: '1px solid rgba(224, 168, 78, 0.3)', backdropFilter: 'blur(16px)', padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', zIndex: 50, color: '#F4D28A' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem' }}>
-            <Wifi style={{ width: '18px', height: '18px', color: '#E0A84E' }} />
+            <Wifi style={{ width: '18px', height: '18px', color: clockColor }} />
             <span><strong>Mac Companion Offline:</strong> Enter your Mac's Wi-Fi IP (e.g. <code>192.168.0.110</code>) or run USB cable:</span>
           </div>
 
@@ -287,7 +298,7 @@ export function App() {
             />
             <button
               onClick={handleConnectIp}
-              style={{ background: '#E0A84E', color: '#0D0F10', border: 'none', padding: '6px 14px', borderRadius: '12px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ background: clockColor, color: '#0D0F10', border: 'none', padding: '6px 14px', borderRadius: '12px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Zap style={{ width: '14px', height: '14px' }} />
               <span>Connect</span>
@@ -310,7 +321,9 @@ export function App() {
             macSpecs={macSpecs}
             mediaState={mediaState}
             clockStyle={clockStyle}
+            clockColor={clockColor}
             onClockStyleChange={handleClockStyleChange}
+            onOpenMusicModal={() => setIsMusicModalOpen(true)}
             onTogglePlayPause={() => macController.togglePlayPause()}
             onNextTrack={() => macController.nextTrack()}
             onPrevTrack={() => macController.previousTrack()}
@@ -335,10 +348,16 @@ export function App() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        config={config}
+        config={{
+          ...config,
+          clockStyle,
+          clockColor
+        }}
         onSaveConfig={(newCfg) => {
           setConfig(newCfg);
           setNightMode(newCfg.nightMode);
+          if (newCfg.clockStyle) handleClockStyleChange(newCfg.clockStyle);
+          if (newCfg.clockColor) handleClockColorChange(newCfg.clockColor);
           macController.setMacAddress(newCfg.macHostIp, newCfg.macPort);
         }}
         macSpecs={macSpecs}

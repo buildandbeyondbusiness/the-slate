@@ -36,11 +36,15 @@ export interface StreamDeckCard {
   badgeText?: string;
 }
 
+export type ClockStyle = 'curvy-apple' | 'pill-blocks' | 'minimal-hero' | 'playful-colors' | 'analog' | 'stacked' | 'world';
+
 export interface SettingsConfig {
   macHostIp: string;
   macPort: number;
   autoConnect: boolean;
   nightMode: boolean;
   standbyTheme: 'glass' | 'midnight' | 'neon' | 'cyber';
+  clockStyle?: ClockStyle;
+  clockColor?: string;
   enableHaptics: boolean;
 }
