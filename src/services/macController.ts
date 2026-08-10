@@ -10,41 +10,51 @@ class MacControllerService {
   private port: number = 3001;
   private isConnected: boolean = false;
   private reconnectTimer: any = null;
-  private mockTimer: any = null;
 
   private onSystemSpecsListeners: Set<SystemSpecsCallback> = new Set();
   private onMediaStateListeners: Set<MediaStateCallback> = new Set();
   private onToastListeners: Set<ToastCallback> = new Set();
 
   private mediaState: MediaTrackState = {
-    trackName: 'Starboy',
-    artist: 'The Weeknd ft. Daft Punk',
-    album: 'Starboy',
-    albumArt: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400&auto=format&fit=crop&q=80',
-    isPlaying: true,
-    durationSeconds: 230,
-    positionSeconds: 84,
+    trackName: 'Waiting for Mac Music...',
+    artist: 'Open Spotify or Apple Music on Mac',
+    album: 'Mac Companion Server',
+    albumArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80',
+    isPlaying: false,
+    durationSeconds: 180,
+    positionSeconds: 0,
     volume: 75,
-    sourceApp: 'Spotify'
+    sourceApp: 'System'
   };
 
   private systemSpecs: MacSystemSpecs = {
-    cpuUsage: 34,
-    gpuUsage: 18,
-    memoryUsedGB: 9.2,
-    memoryTotalGB: 18.0,
-    memoryPercentage: 51,
-    macName: 'Sidhh\'s MacBook Pro M3',
+    cpuUsage: 0,
+    gpuUsage: 0,
+    memoryUsedGB: 0,
+    memoryTotalGB: 16.0,
+    memoryPercentage: 0,
+    macName: 'Connecting to Mac...',
     isConnected: false
   };
 
   constructor() {
-    this.startMockSimulation();
+    // Attempt automatic IP discovery on load
+    const savedIp = localStorage.getItem('slate_mac_ip');
+    if (savedIp) {
+      this.macIp = savedIp;
+    } else if (window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      this.macIp = window.location.hostname;
+    } else {
+      this.macIp = 'localhost';
+    }
+
+    this.connectWebSocket();
   }
 
   public setMacAddress(ip: string, port: number = 3001) {
     this.macIp = ip || 'localhost';
     this.port = port;
+    localStorage.setItem('slate_mac_ip', this.macIp);
     this.connectWebSocket();
   }
 
@@ -56,7 +66,7 @@ class MacControllerService {
     }
 
     const wsUrl = `ws://${this.macIp}:${this.port}`;
-    console.log(`[MacController] Connecting to ${wsUrl}...`);
+    console.log(`[MacController] Connecting to Mac Companion at ${wsUrl}...`);
 
     try {
       this.ws = new WebSocket(wsUrl);
@@ -85,7 +95,7 @@ class MacControllerService {
             this.notifyMedia();
           }
         } catch (err) {
-          console.error('[MacController] Error parsing message:', err);
+          console.error('[MacController] Message error:', err);
         }
       };
 
@@ -103,10 +113,14 @@ class MacControllerService {
 
   private handleDisconnect() {
     if (this.isConnected) {
-      this.notifyToast('Mac Companion disconnected. Using fallback mode.');
+      this.notifyToast('Disconnected from Mac. Retrying auto-connect...');
     }
     this.isConnected = false;
-    this.systemSpecs.isConnected = false;
+    this.systemSpecs = {
+      ...this.systemSpecs,
+      isConnected: false,
+      macName: `Mac Server Offline (${this.macIp})`
+    };
     this.notifySpecs();
 
     if (!this.reconnectTimer) {
@@ -114,11 +128,11 @@ class MacControllerService {
         if (!this.isConnected) {
           this.connectWebSocket();
         }
-      }, 10000);
+      }, 4000);
     }
   }
 
-  // Real or Simulated App Launching
+  // Real App Launching on Mac
   public launchApp(appOrCommand: string) {
     if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({
@@ -127,13 +141,11 @@ class MacControllerService {
       }));
       this.notifyToast(`Launching ${appOrCommand} on Mac...`);
     } else {
-      // Fallback local notification
-      console.log(`[Simulated] Launching ${appOrCommand}`);
-      this.notifyToast(`🚀 Launched ${appOrCommand} on Mac!`);
+      this.notifyToast(`Mac Server Offline. Double-click Start-The-Slate-Mac-Server.command on Mac!`);
     }
   }
 
-  // Media Controls (Play, Pause, Skip, Rewind, Seek, Volume)
+  // Real Playback Controls
   public togglePlayPause() {
     this.mediaState.isPlaying = !this.mediaState.isPlaying;
     this.notifyMedia();
@@ -149,19 +161,6 @@ class MacControllerService {
 
     if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ action: 'MEDIA_NEXT' }));
-    } else {
-      // Simulated next track rotation
-      const demoTracks = [
-        { name: 'Blinding Lights', artist: 'The Weeknd', art: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80' },
-        { name: 'Midnight City', artist: 'M83', art: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&auto=format&fit=crop&q=80' },
-        { name: 'Get Lucky', artist: 'Daft Punk ft. Pharrell', art: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&auto=format&fit=crop&q=80' }
-      ];
-      const randomIndex = Math.floor(Math.random() * demoTracks.length);
-      const track = demoTracks[randomIndex];
-      this.mediaState.trackName = track.name;
-      this.mediaState.artist = track.artist;
-      this.mediaState.albumArt = track.art;
-      this.notifyMedia();
     }
   }
 
@@ -192,7 +191,7 @@ class MacControllerService {
     }
   }
 
-  // Listeners
+  // Subscriptions
   public subscribeSpecs(cb: SystemSpecsCallback) {
     this.onSystemSpecsListeners.add(cb);
     cb(this.systemSpecs);
@@ -220,40 +219,6 @@ class MacControllerService {
 
   private notifyToast(msg: string) {
     this.onToastListeners.forEach((cb) => cb(msg));
-  }
-
-  // Smooth local simulation timer when offline
-  private startMockSimulation() {
-    if (this.mockTimer) clearInterval(this.mockTimer);
-
-    this.mockTimer = setInterval(() => {
-      if (!this.isConnected) {
-        // Dynamic simulated CPU / GPU / RAM fluctuation
-        const newCpu = Math.min(95, Math.max(12, this.systemSpecs.cpuUsage + (Math.random() * 8 - 4)));
-        const newGpu = Math.min(90, Math.max(8, this.systemSpecs.gpuUsage + (Math.random() * 6 - 3)));
-        const memoryUsedGB = Number((8.2 + Math.random() * 0.8).toFixed(1));
-        const memoryPercentage = Math.round((memoryUsedGB / this.systemSpecs.memoryTotalGB) * 100);
-
-        this.systemSpecs = {
-          ...this.systemSpecs,
-          cpuUsage: Math.round(newCpu),
-          gpuUsage: Math.round(newGpu),
-          memoryUsedGB,
-          memoryPercentage
-        };
-        this.notifySpecs();
-
-        // Increment track position if playing
-        if (this.mediaState.isPlaying) {
-          if (this.mediaState.positionSeconds < this.mediaState.durationSeconds) {
-            this.mediaState.positionSeconds += 1;
-          } else {
-            this.mediaState.positionSeconds = 0;
-          }
-          this.notifyMedia();
-        }
-      }
-    }, 1000);
   }
 }
 
