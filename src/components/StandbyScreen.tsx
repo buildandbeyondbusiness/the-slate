@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Cpu, Music, Compass } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Cpu, Music, Compass, Sun, Bell } from 'lucide-react';
 import { MacSystemSpecs, MediaTrackState } from '../types';
 
 interface StandbyScreenProps {
@@ -12,7 +12,7 @@ interface StandbyScreenProps {
   onNavigateToStreamDeck: () => void;
 }
 
-export type ClockStyle = 'digital' | 'analog' | 'world' | 'stacked';
+export type ClockStyle = 'digital' | 'pink-standby' | 'playful-colors' | 'analog' | 'stacked' | 'world';
 
 export const StandbyScreen: React.FC<StandbyScreenProps> = ({
   macSpecs,
@@ -23,12 +23,14 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
   onSeek,
   onNavigateToStreamDeck,
 }) => {
-  const [clockStyle, setClockStyle] = useState<ClockStyle>('digital');
-  const [hours, setHours] = useState('08');
-  const [minutes, setMinutes] = useState('45');
+  const [clockStyle, setClockStyle] = useState<ClockStyle>('pink-standby');
+  const [hours, setHours] = useState('05');
+  const [minutes, setMinutes] = useState('13');
   const [seconds, setSeconds] = useState(0);
   const [ampmStr, setAmpmStr] = useState('PM');
   const [dateStr, setDateStr] = useState('');
+  const [dayAbbr, setDayAbbr] = useState('WED');
+  const [dayNum, setDayNum] = useState('26');
   
   // Analog hands angles
   const [hourAngle, setHourAngle] = useState(0);
@@ -46,13 +48,18 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
       const ampm = rawHours >= 12 ? 'PM' : 'AM';
       const displayHours = rawHours % 12 || 12;
 
-      setHours(String(displayHours).padStart(2, '0'));
-      setMinutes(String(mins).padStart(2, '0'));
+      const hStr = String(displayHours).padStart(2, '0');
+      const mStr = String(mins).padStart(2, '0');
+
+      setHours(hStr);
+      setMinutes(mStr);
       setSeconds(secs);
       setAmpmStr(ampm);
       setDateStr(
         now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
       );
+      setDayAbbr(now.toLocaleDateString([], { weekday: 'short' }).toUpperCase());
+      setDayNum(String(now.getDate()));
 
       // Analog Angles
       setSecondAngle(secs * 6);
@@ -81,8 +88,8 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
     const touchEndY = e.changedTouches[0].clientY;
     const diffY = touchStartY - touchEndY;
 
-    if (Math.abs(diffY) > 40) {
-      const styles: ClockStyle[] = ['digital', 'analog', 'world', 'stacked'];
+    if (Math.abs(diffY) > 35) {
+      const styles: ClockStyle[] = ['pink-standby', 'playful-colors', 'digital', 'analog', 'stacked', 'world'];
       const currIdx = styles.indexOf(clockStyle);
       if (diffY > 0) {
         // Swipe Up -> Next Style
@@ -99,6 +106,77 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
 
   const renderClockDisplay = () => {
     switch (clockStyle) {
+      // 1. Apple StandBy Pink/Coral Hero Clock (User Photo 1!)
+      case 'pink-standby':
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: 'auto 0', width: '100%' }}>
+            {/* Giant Pink Time Digits */}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+              <span style={{ fontSize: '7.2rem', fontWeight: 900, color: '#f472b6', letterSpacing: '-4px', lineHeight: 1, fontFamily: '"Outfit", sans-serif' }}>
+                {parseInt(hours)}:{minutes}
+              </span>
+            </div>
+
+            {/* Right Side Weather & Alarm Widget Stack */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left', paddingLeft: '20px' }}>
+              <div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f472b6', letterSpacing: '0.5px' }}>
+                  {dayAbbr} {dayNum}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '1.1rem', fontWeight: 700, color: '#F1F3F4', marginTop: '2px' }}>
+                  <span>30°</span>
+                  <Sun style={{ width: '18px', height: '18px', color: '#f59e0b' }} />
+                </div>
+              </div>
+
+              <div style={{ paddingTop: '10px', borderTop: '1px solid rgba(244, 114, 182, 0.2)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f472b6' }}>
+                  <Bell style={{ width: '16px', height: '16px' }} />
+                  <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#F1F3F4' }}>8:00AM</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      // 2. Apple StandBy Playful Color Blocks Clock (User Photo 2!)
+      case 'playful-colors':
+        const hDigit1 = hours[0];
+        const hDigit2 = hours[1];
+        const mDigit1 = minutes[0];
+        const mDigit2 = minutes[1];
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: 'auto 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px', lineHeight: 1 }}>
+              {/* Digit 1: Coral Pink */}
+              <span style={{ fontSize: '7.5rem', fontWeight: 900, color: '#f472b6', fontFamily: '"Outfit", sans-serif', letterSpacing: '-2px' }}>
+                {hDigit1}
+              </span>
+              {/* Digit 2: Lavender Violet */}
+              <span style={{ fontSize: '7.5rem', fontWeight: 900, color: '#c084fc', fontFamily: '"Outfit", sans-serif', letterSpacing: '-2px' }}>
+                {hDigit2}
+              </span>
+              {/* Playful Colon */}
+              <span style={{ fontSize: '5.5rem', fontWeight: 900, color: '#94a3b8', margin: '0 4px', transform: 'translateY(-6px)' }}>
+                :
+              </span>
+              {/* Digit 3: Soft Blue Purple */}
+              <span style={{ fontSize: '7.5rem', fontWeight: 900, color: '#818cf8', fontFamily: '"Outfit", sans-serif', letterSpacing: '-2px' }}>
+                {mDigit1}
+              </span>
+              {/* Digit 4: Bright Rose */}
+              <span style={{ fontSize: '7.5rem', fontWeight: 900, color: '#f43f5e', fontFamily: '"Outfit", sans-serif', letterSpacing: '-2px' }}>
+                {mDigit2}
+              </span>
+            </div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#c084fc', marginTop: '4px' }}>
+              {dateStr}
+            </div>
+          </div>
+        );
+
+      // 3. Apple Swiss Analog Clock
       case 'analog':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: 'auto 0' }}>
@@ -116,7 +194,6 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
                 justifyContent: 'center'
               }}
             >
-              {/* Dial Ticks */}
               {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
                 <div
                   key={deg}
@@ -130,7 +207,6 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
                 />
               ))}
 
-              {/* Hour Hand */}
               <div 
                 style={{
                   position: 'absolute',
@@ -144,7 +220,6 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
                 }}
               />
 
-              {/* Minute Hand */}
               <div 
                 style={{
                   position: 'absolute',
@@ -158,7 +233,6 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
                 }}
               />
 
-              {/* Second Hand */}
               <div 
                 style={{
                   position: 'absolute',
@@ -171,7 +245,6 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
                 }}
               />
 
-              {/* Center Dot */}
               <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#E0A84E', zIndex: 10, border: '2px solid #F1F3F4' }} />
             </div>
 
@@ -181,6 +254,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
           </div>
         );
 
+      // 4. Stacked Big Numerals
       case 'stacked':
         return (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: 'auto 0', width: '100%' }}>
@@ -195,6 +269,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
           </div>
         );
 
+      // 5. Apple World Clock
       case 'world':
         return (
           <div style={{ margin: 'auto 0', width: '100%' }}>
@@ -225,7 +300,8 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
           </div>
         );
 
-      default: // 'digital'
+      // Default Digital Clock
+      default:
         return (
           <div className="clock-center-display">
             <div className="clock-hero-time">
@@ -256,7 +332,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
             
             {/* Clock Face Indicator Dots */}
             <div style={{ display: 'flex', gap: '4px', marginLeft: '6px' }}>
-              {(['digital', 'analog', 'stacked', 'world'] as ClockStyle[]).map((st) => (
+              {(['pink-standby', 'playful-colors', 'digital', 'analog', 'stacked', 'world'] as ClockStyle[]).map((st) => (
                 <button
                   key={st}
                   onClick={(e) => {
@@ -294,7 +370,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
         <div className="card-bottom-row">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#69C58A' }} />
-            <span>Swipe ↑↓ to Change Clock Design</span>
+            <span>Swipe ↑↓ for Apple StandBy Designs</span>
           </div>
           <span style={{ color: '#E0A84E', fontWeight: 700 }}>{clockStyle.toUpperCase()}</span>
         </div>
