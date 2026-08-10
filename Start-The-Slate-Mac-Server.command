@@ -13,12 +13,16 @@ echo "  THE SLATE — AUTOMATIC USB TABLET KIOSK & SERVER"
 echo "================================================================"
 echo ""
 
-# Kill any previous instance running on port 3000/3001
-lsof -ti:3000 | xargs kill -9 2>/dev/null
-lsof -ti:3001 | xargs kill -9 2>/dev/null
+# Forcefully kill any previous node process running on port 3000/3001
+echo "🧹 Cleaning up any old background server instances..."
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+pkill -f "companion-server/server.cjs" 2>/dev/null || true
+
+sleep 1
 
 # 1. Start Companion Server (Port 3001) & Web App (Port 3000)
-echo "🚀 Starting Mac Companion Server (Port 3001)..."
+echo "🚀 Starting Fresh Mac Companion Server (Port 3001)..."
 node "$DIR/companion-server/server.cjs" &
 PID_SERVER=$!
 
@@ -49,13 +53,12 @@ if command -v adb &> /dev/null; then
         adb shell input keyevent 82 2>/dev/null
         
         echo "📲 LAUNCHING THE SLATE IN FULLSCREEN MODE..."
-        # Launch Chrome with Intent Flags
         adb shell am start -n com.android.chrome/com.google.android.apps.chrome.Main -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null || adb shell am start -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null
         
         echo ""
         echo "================================================================"
         echo " 🎉 SUCCESS! Streaming live to your Samsung Tab in Fullscreen!"
-        echo "    Tap the ⛶ icon in top-right for full browser kiosk mode."
+        echo "    Real-Time Music Sync: ACTIVE (Apple Music & Spotify)"
         echo "================================================================"
     else
         echo "⚠️  No USB Android device detected in 'adb devices'."
