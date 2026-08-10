@@ -37,9 +37,23 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'apps' | 'macros'>('all');
 
-  const renderCardIcon = (iconName: string, color: string) => {
-    const style = { width: '28px', height: '28px', color };
-    switch (iconName) {
+  const renderCardIcon = (card: StreamDeckCard) => {
+    if (card.iconUrl) {
+      return (
+        <img 
+          src={card.iconUrl} 
+          alt={card.title} 
+          style={{ width: '26px', height: '26px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} 
+          onError={(e) => {
+            // Fallback to Lucide if image fails to load
+            (e.target as HTMLElement).style.display = 'none';
+          }}
+        />
+      );
+    }
+
+    const style = { width: '24px', height: '24px', color: card.accentColor };
+    switch (card.iconName) {
       case 'Code': return <Code style={style} />;
       case 'Terminal': return <Terminal style={style} />;
       case 'Globe': return <Globe style={style} />;
@@ -68,7 +82,7 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
             <Music style={{ width: '18px', height: '18px', color: '#f43f5e' }} />
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
               <span style={{ fontWeight: 800 }}>Music</span>
-              <span style={{ fontSize: '0.65rem', color: '#94a3b8', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {mediaState.trackName || 'Now Playing'}
               </span>
             </div>
@@ -78,15 +92,15 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
           <button
             onClick={() => setIsEditMode(!isEditMode)}
             className="glass-pill-btn"
-            style={{ background: isEditMode ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255,255,255,0.07)', borderColor: isEditMode ? '#f59e0b' : 'var(--border-glass)' }}
+            style={{ background: isEditMode ? 'rgba(224, 168, 78, 0.2)' : 'var(--bg-elevated)', borderColor: isEditMode ? '#E0A84E' : 'var(--border-glass)' }}
           >
-            {isEditMode ? <Check style={{ width: '16px', height: '16px' }} /> : <Edit3 style={{ width: '16px', height: '16px', color: '#38bdf8' }} />}
+            {isEditMode ? <Check style={{ width: '16px', height: '16px', color: '#69C58A' }} /> : <Edit3 style={{ width: '16px', height: '16px', color: '#E0A84E' }} />}
             <span>{isEditMode ? 'Done Editing' : 'Buttons'}</span>
           </button>
         </div>
 
         {/* Center Category Tabs */}
-        <div className="deck-tabs-center" style={{ background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '9999px', border: '1px solid var(--border-glass)' }}>
+        <div className="deck-tabs-center" style={{ background: 'var(--bg-card)', padding: '4px', borderRadius: '9999px', border: '1px solid var(--border-glass)' }}>
           <button
             onClick={() => setActiveTab('all')}
             className={`glass-pill-btn ${activeTab === 'all' ? 'active' : ''}`}
@@ -111,13 +125,13 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
         </div>
 
         {/* Add Shortcut */}
-        <button onClick={() => onOpenButtonEditor()} className="glass-pill-btn" style={{ borderColor: '#38bdf8', color: '#38bdf8' }}>
+        <button onClick={() => onOpenButtonEditor()} className="glass-pill-btn" style={{ borderColor: '#E0A84E', color: '#E0A84E' }}>
           <Plus style={{ width: '16px', height: '16px' }} />
           <span>Add Shortcut</span>
         </button>
       </div>
 
-      {/* 3x2 Stream Deck Grid */}
+      {/* 3x3 Stream Deck Grid with Authentic 3D iOS App Icons */}
       <div className="deck-grid">
         {filteredCards.map((card) => (
           <div
@@ -132,11 +146,11 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
             className="macro-card"
           >
             <div className="macro-card-top">
-              <div className="macro-icon-box" style={{ background: `${card.accentColor}20`, borderColor: `${card.accentColor}40` }}>
-                {renderCardIcon(card.iconName, card.accentColor)}
+              <div className="macro-icon-box" style={{ background: `${card.accentColor}18`, borderColor: `${card.accentColor}35` }}>
+                {renderCardIcon(card)}
               </div>
 
-              <span className="macro-category-tag" style={{ background: `${card.accentColor}20`, color: card.accentColor }}>
+              <span className="macro-category-tag" style={{ background: `${card.accentColor}18`, color: card.accentColor }}>
                 {card.badgeText || card.category}
               </span>
             </div>
@@ -154,10 +168,10 @@ export const StreamDeckScreen: React.FC<StreamDeckScreenProps> = ({
         ))}
       </div>
 
-      {/* Bottom Right Settings Button (From User Sketch!) */}
+      {/* Bottom Right Settings Button */}
       <div className="deck-footer">
         <button onClick={onOpenSettings} className="glass-pill-btn" style={{ padding: '12px 24px', fontSize: '0.9rem' }}>
-          <Settings style={{ width: '20px', height: '20px', color: '#38bdf8' }} />
+          <Settings style={{ width: '20px', height: '20px', color: '#E0A84E' }} />
           <span style={{ fontWeight: 700 }}>Settings</span>
         </button>
       </div>

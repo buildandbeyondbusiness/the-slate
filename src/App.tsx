@@ -16,16 +16,18 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     title: 'Antigravity',
     subtitle: 'AI Coding Assistant',
     iconName: 'Code',
+    iconUrl: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/google-gemini.png',
     category: 'app',
     targetAppOrCommand: 'Antigravity',
-    accentColor: '#38bdf8',
+    accentColor: '#E0A84E',
     badgeText: 'AI'
   },
   {
     id: 'card_music',
     title: 'Music',
-    subtitle: 'Spotify / Apple Music',
+    subtitle: 'Apple Music / Spotify',
     iconName: 'PlayCircle',
+    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Apple_Music_icon.svg',
     category: 'app',
     targetAppOrCommand: 'Music',
     accentColor: '#f43f5e',
@@ -36,9 +38,10 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     title: 'WhatsApp',
     subtitle: 'Messaging App',
     iconName: 'Globe',
+    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg',
     category: 'app',
     targetAppOrCommand: 'WhatsApp',
-    accentColor: '#10b981',
+    accentColor: '#25D366',
     badgeText: 'CHAT'
   },
   {
@@ -46,9 +49,10 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     title: 'VS Code',
     subtitle: 'Visual Studio Code',
     iconName: 'Terminal',
+    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/9/9a/Visual_Studio_Code_1.35_icon.svg',
     category: 'app',
     targetAppOrCommand: 'Visual Studio Code',
-    accentColor: '#818cf8',
+    accentColor: '#007ACC',
     badgeText: 'IDE'
   },
   {
@@ -56,9 +60,10 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     title: 'Gemini',
     subtitle: 'Google AI Portal',
     iconName: 'Layers',
+    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg',
     category: 'app',
     targetAppOrCommand: 'Gemini',
-    accentColor: '#a855f7',
+    accentColor: '#8E75FF',
     badgeText: 'AI'
   },
   {
@@ -66,9 +71,10 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     title: 'GitHub',
     subtitle: 'Code Repositories',
     iconName: 'Globe',
+    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg',
     category: 'app',
     targetAppOrCommand: 'GitHub',
-    accentColor: '#f59e0b',
+    accentColor: '#F4D28A',
     badgeText: 'GIT'
   },
   {
@@ -76,6 +82,7 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     title: 'Screenshot',
     subtitle: 'Capture Mac Screen',
     iconName: 'Palette',
+    iconUrl: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/mac-os.png',
     category: 'macro',
     targetAppOrCommand: 'Screenshot',
     accentColor: '#ec4899',
@@ -86,9 +93,10 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     title: 'Lock Mac',
     subtitle: 'Sleep Screen',
     iconName: 'Lock',
+    iconUrl: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/keycloak.png',
     category: 'macro',
     targetAppOrCommand: 'LockMac',
-    accentColor: '#38bdf8',
+    accentColor: '#E0A84E',
     badgeText: 'SECURITY'
   },
   {
@@ -96,9 +104,10 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     title: 'Mute Mac',
     subtitle: 'Mute System Audio',
     iconName: 'VolumeX',
+    iconUrl: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/audiobookshelf.png',
     category: 'macro',
     targetAppOrCommand: 'MuteMac',
-    accentColor: '#f43f5e',
+    accentColor: '#D96C6C',
     badgeText: 'AUDIO'
   }
 ];

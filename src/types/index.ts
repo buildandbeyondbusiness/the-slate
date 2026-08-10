@@ -28,10 +28,11 @@ export interface StreamDeckCard {
   id: string;
   title: string;
   subtitle: string;
-  iconName: string; // Lucide icon name string
+  iconName: string; // Lucide fallback icon name
+  iconUrl?: string; // Authentic iOS App Icon URL
   category: ActionCategory;
-  targetAppOrCommand: string; // e.g. "Visual Studio Code", "Spotify", "LockMac", "MuteMic"
-  accentColor: string; // e.g. "#38bdf8", "#818cf8", "#f43f5e", "#10b981"
+  targetAppOrCommand: string;
+  accentColor: string;
   badgeText?: string;
 }
 
