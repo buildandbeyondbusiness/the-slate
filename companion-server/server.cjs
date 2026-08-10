@@ -3,10 +3,8 @@
  * 
  * Multi-protocol Local Mac Integration (CommonJS .cjs):
  * - WebSocket Server (port 3001)
- * - HTTP REST API Server (with CORS enabled for browser apps)
+ * - HTTP REST API (POST + GET query string support for 100% CORS & Mixed Content bypass)
  * - Zero-CPU Idle Polling
- * - Real Spotify & Apple Music Metadata & Control
- * - Real Mac App Launching & Hardware Metrics
  */
 
 const http = require('http');
@@ -14,6 +12,7 @@ const { exec } = require('child_process');
 const os = require('os');
 const WebSocket = require('ws');
 const https = require('https');
+const url = require('url');
 
 const PORT = 3001;
 
@@ -58,7 +57,9 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.url === '/api/state' || req.url === '/ping' || req.url === '/') {
+  const parsedUrl = url.parse(req.url, true);
+
+  if (parsedUrl.pathname === '/api/state' || parsedUrl.pathname === '/ping' || parsedUrl.pathname === '/') {
     const specs = await getFullSpecs();
     const media = await getRealMediaState();
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -67,20 +68,40 @@ const server = http.createServer(async (req, res) => {
       systemSpecs: specs,
       mediaState: media
     }));
-  } else if (req.url === '/api/action' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', async () => {
+  } else if (parsedUrl.pathname === '/api/action') {
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', async () => {
+        try {
+          const data = JSON.parse(body);
+          await handleAction(data);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ status: 'success' }));
+        } catch (err) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ status: 'error' }));
+        }
+      });
+    } else if (req.method === 'GET') {
+      // Support GET query parameters for no-cors beacon fallback!
       try {
-        const data = JSON.parse(body);
-        await handleAction(data);
+        const query = parsedUrl.query;
+        if (query.action) {
+          await handleAction({
+            action: query.action,
+            appName: query.appName,
+            volume: query.volume ? Number(query.volume) : undefined,
+            position: query.position ? Number(query.position) : undefined
+          });
+        }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'success' }));
       } catch (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'error', error: err.message }));
+        res.end(JSON.stringify({ status: 'error' }));
       }
-    });
+    }
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'not_found' }));
@@ -273,6 +294,8 @@ async function getRealMediaState() {
 
 async function handleAction(data) {
   console.log('[MacCompanion] Action Executed:', data);
+  if (!data || !data.action) return;
+
   if (data.action === 'LAUNCH_APP') {
     const appName = data.appName;
     if (appName === 'LockMac') {
