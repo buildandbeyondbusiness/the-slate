@@ -1,29 +1,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Exact Custom User Palette */
+  /* Apple iOS Near-black Graphite & Warm Amber Palette */
   --bg-dark: #0D0F10;             /* Near-black graphite */
-  --bg-card: #171A1D;             /* Dark graphite */
-  --bg-card-hover: #202428;       /* Slate graphite */
+  --bg-card: #171A1D;             /* Dark graphite surface */
+  --bg-card-hover: #202428;       /* Slate graphite elevated surface */
   --bg-elevated: #202428;         /* Slate graphite */
   
-  --accent-amber: #E0A84E;        /* Primary Accent: Warm amber */
-  --accent-champagne: #F4D28A;    /* Accent highlight: Champagne */
+  --accent-amber: #E0A84E;        /* Primary Accent: Warm Amber */
+  --accent-champagne: #F4D28A;    /* Accent Highlight: Champagne */
   
-  --text-white: #F1F3F4;          /* Main text: Off-white */
-  --text-muted: #8B9299;          /* Secondary text: Cool gray */
-  --text-dim: #646E77;            /* Dim gray */
+  --text-white: #F1F3F4;          /* Main Text: Off-White */
+  --text-muted: #8B9299;          /* Secondary Text: Cool Gray */
+  --text-dim: #646E77;            /* Dim Gray */
   
-  --border-glass: #2A2F34;        /* Borders: Subtle graphite */
-  --border-glass-hover: #E0A84E;  /* Warm amber highlight border */
+  --border-glass: #2A2F34;        /* Borders: Subtle Graphite */
+  --border-glass-hover: #E0A84E;  /* Warm Amber Hover Border */
   
-  --color-success: #69C58A;       /* Soft green */
+  --color-success: #69C58A;       /* Soft Green */
   --color-warning: #E0A84E;       /* Amber */
-  --color-error: #D96C6C;         /* Muted red */
+  --color-error: #D96C6C;         /* Muted Red */
   
-  /* Map legacy theme keys */
+  /* Apple iOS Spring Easing Timings (WWDC Fluid Motion Specs) */
+  --ease-apple-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-apple-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-apple-fast: cubic-bezier(0, 0, 0.2, 1);
+  
   --accent-sky: #E0A84E;
-  --accent-rose: #E0A84E;
+  --accent-rose: #D96C6C;
   --accent-purple: #F4D28A;
   --accent-emerald: #69C58A;
 }
@@ -34,6 +38,8 @@
   padding: 0;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html, body, #root {
@@ -42,8 +48,9 @@ html, body, #root {
   overflow: hidden;
   background-color: var(--bg-dark);
   color: var(--text-white);
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Application Wrapper */
@@ -55,6 +62,7 @@ html, body, #root {
   position: relative;
   overflow: hidden;
   background: radial-gradient(circle at 50% 20%, #171A1D 0%, #0D0F10 100%);
+  touch-action: manipulation;
 }
 
 /* ======================================================== */
@@ -67,7 +75,9 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #171A1D;
+  background: rgba(23, 26, 29, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid var(--border-glass);
   z-index: 40;
 }
@@ -100,30 +110,32 @@ html, body, #root {
   margin-top: -2px;
 }
 
-/* Glass Pill Buttons */
+/* Apple iOS Instant Response Buttons (§1 Response — Kill Latency) */
 .glass-pill-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
   border-radius: 9999px;
-  background: #202428;
+  background: var(--bg-elevated);
   border: 1px solid var(--border-glass);
   color: var(--text-white);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 90ms var(--ease-apple-fast), background-color 0.2s var(--ease-apple-spring), border-color 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Respond on pointer-down / press instantly */
+.glass-pill-btn:active {
+  transform: scale(0.94);
+  background: #2A2F34;
 }
 
 .glass-pill-btn:hover {
-  background: #2A2F34;
   border-color: var(--accent-amber);
   color: var(--accent-champagne);
-}
-
-.glass-pill-btn:active {
-  transform: scale(0.96);
 }
 
 .icon-badge {
@@ -145,15 +157,16 @@ html, body, #root {
   width: 8px;
   height: 8px;
   border-radius: 9999px;
-  background: #2A2F34;
+  background: var(--border-glass);
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.35s var(--ease-apple-spring);
 }
 
 .dot.active {
   width: 24px;
   background: var(--accent-amber);
+  box-shadow: 0 0 12px rgba(224, 168, 78, 0.4);
 }
 
 /* ======================================================== */
@@ -178,15 +191,27 @@ html, body, #root {
   height: 100%;
   max-width: 1350px;
   margin: 0 auto;
+  animation: appleFadeIn 0.4s var(--ease-apple-spring);
 }
 
-/* Glass Card Component */
+@keyframes appleFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Glass Card Component (§5 Materials & Depth) */
 .glass-card {
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: 28px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
-  transition: all 0.25s ease;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.25s var(--ease-apple-spring), background-color 0.25s ease, border-color 0.25s ease;
   position: relative;
   overflow: hidden;
 }
@@ -227,19 +252,22 @@ html, body, #root {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #202428;
+  background: var(--bg-elevated);
   border: 1px solid var(--border-glass);
   color: var(--accent-amber);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.25s var(--ease-apple-spring), background-color 0.2s ease;
+}
+
+.compass-btn:active {
+  transform: scale(0.9);
 }
 
 .compass-btn:hover {
   background: #2A2F34;
-  border-color: var(--accent-amber);
   transform: rotate(45deg) scale(1.08);
 }
 
@@ -320,7 +348,7 @@ html, body, #root {
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 9999px;
-  background: #202428;
+  background: var(--bg-elevated);
   border: 1px solid var(--border-glass);
   color: var(--accent-champagne);
 }
@@ -344,14 +372,14 @@ html, body, #root {
   width: 100%;
   height: 8px;
   border-radius: 9999px;
-  background: #202428;
+  background: var(--bg-elevated);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
   border-radius: 9999px;
-  transition: width 0.6s ease;
+  transition: width 0.5s var(--ease-apple-spring);
 }
 
 .fill-cpu {
@@ -380,8 +408,13 @@ html, body, #root {
   border-radius: 18px;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
   border: 1px solid var(--border-glass);
+  transition: transform 0.3s var(--ease-apple-spring);
+}
+
+.album-art-box:hover {
+  transform: scale(1.04);
 }
 
 .album-art-box img {
@@ -425,12 +458,16 @@ html, body, #root {
   cursor: pointer;
   padding: 6px;
   border-radius: 50%;
-  transition: all 0.2s ease;
+  transition: transform 80ms var(--ease-apple-fast), color 0.2s ease;
+}
+
+.ctrl-btn:active {
+  transform: scale(0.88);
 }
 
 .ctrl-btn:hover {
   color: var(--accent-champagne);
-  background: #202428;
+  background: var(--bg-elevated);
 }
 
 .play-btn {
@@ -445,7 +482,11 @@ html, body, #root {
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(224, 168, 78, 0.4);
-  transition: transform 0.2s ease;
+  transition: transform 90ms var(--ease-apple-fast), box-shadow 0.2s ease;
+}
+
+.play-btn:active {
+  transform: scale(0.9);
 }
 
 .play-btn:hover {
@@ -460,7 +501,7 @@ html, body, #root {
 input[type=range] {
   width: 100%;
   -webkit-appearance: none;
-  background: #202428;
+  background: var(--bg-elevated);
   height: 6px;
   border-radius: 9999px;
   outline: none;
@@ -474,6 +515,11 @@ input[type=range]::-webkit-slider-thumb {
   background: var(--accent-amber);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
 }
 
 .seekbar-timestamps {
@@ -491,10 +537,12 @@ input[type=range]::-webkit-slider-thumb {
 .stream-deck-container {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
+  height: auto;
+  min-height: 100%;
   max-width: 1350px;
   margin: 0 auto;
+  padding-bottom: 24px;
+  animation: appleFadeIn 0.4s var(--ease-apple-spring);
 }
 
 .deck-header {
@@ -514,9 +562,7 @@ input[type=range]::-webkit-slider-thumb {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  flex: 1;
-  align-items: stretch;
-  margin: auto 0;
+  width: 100%;
 }
 
 .macro-card {
@@ -528,21 +574,22 @@ input[type=range]::-webkit-slider-thumb {
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 90ms var(--ease-apple-fast), background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
   position: relative;
   overflow: hidden;
 }
 
+/* Instant press feedback (§1 Response) */
+.macro-card:active {
+  transform: scale(0.95);
+  background: #202428;
+}
+
 .macro-card:hover {
   background: var(--bg-card-hover);
   border-color: var(--accent-amber);
-  transform: translateY(-3px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
-}
-
-.macro-card:active {
-  transform: scale(0.96);
 }
 
 .macro-card-top {
@@ -559,7 +606,12 @@ input[type=range]::-webkit-slider-thumb {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border-glass);
-  background: #202428;
+  background: var(--bg-elevated);
+  transition: transform 0.25s var(--ease-apple-spring);
+}
+
+.macro-card:hover .macro-icon-box {
+  transform: scale(1.06);
 }
 
 .macro-category-tag {
@@ -608,29 +660,47 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 /* ======================================================== */
-/* MODALS & OVERLAYS                                       */
+/* MODALS & OVERLAYS (§7 Spatial Consistency & Springs)     */
 /* ======================================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(13, 15, 16, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   z-index: 50;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
+  animation: appleModalBackdrop 0.3s ease;
+}
+
+@keyframes appleModalBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-card {
   width: 100%;
   max-width: 500px;
-  background: #171A1D;
+  background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: 28px;
   padding: 28px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: appleModalSpring 0.4s var(--ease-apple-spring);
+}
+
+@keyframes appleModalSpring {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
 }
 
 .modal-header {
@@ -655,7 +725,11 @@ input[type=range]::-webkit-slider-thumb {
   cursor: pointer;
   padding: 6px;
   border-radius: 50%;
-  transition: color 0.2s;
+  transition: transform 90ms var(--ease-apple-fast), color 0.2s ease;
+}
+
+.close-btn:active {
+  transform: scale(0.85);
 }
 
 .close-btn:hover {
@@ -679,11 +753,12 @@ input[type=range]::-webkit-slider-thumb {
   width: 100%;
   padding: 12px 16px;
   border-radius: 14px;
-  background: #202428;
+  background: var(--bg-elevated);
   border: 1px solid var(--border-glass);
   color: var(--text-white);
   font-size: 0.9rem;
   outline: none;
+  transition: border-color 0.2s ease;
 }
 
 .form-input:focus, .form-select:focus {
