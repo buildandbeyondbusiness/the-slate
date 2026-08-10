@@ -176,15 +176,21 @@ export function App() {
     localStorage.setItem('the_slate_clock_color', newColor);
   };
 
-  // 3-Second Automatic Fullscreen Trigger Timer after server/page loads!
+  // Hard-coded 4-Second Auto-Click Fullscreen Button Trigger after server/page loads!
   useEffect(() => {
     const fsTimer = setTimeout(() => {
+      const btn = document.getElementById('fullscreen-btn');
+      if (btn) {
+        btn.click();
+      }
       if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
       }
-    }, 3000);
+    }, 4000);
 
     const triggerAutoFullscreen = () => {
+      const btn = document.getElementById('fullscreen-btn');
+      if (btn) btn.click();
       if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
       }

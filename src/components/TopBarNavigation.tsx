@@ -92,8 +92,9 @@ export const TopBarNavigation: React.FC<TopBarProps> = ({
 
       {/* Right Controls */}
       <div className="top-bar-right">
-        {/* Fullscreen Toggle */}
+        {/* Fullscreen Toggle Button */}
         <button
+          id="fullscreen-btn"
           onClick={toggleFullscreen}
           className="glass-pill-btn"
           style={{ padding: '8px', borderRadius: '50%', background: isFullscreen ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.07)' }}

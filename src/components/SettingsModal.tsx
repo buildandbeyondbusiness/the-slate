@@ -87,7 +87,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <option value="pill-blocks"> Apple Translucent Pill Capsules</option>
                 <option value="minimal-hero"> Apple StandBy Hero Clock</option>
                 <option value="playful-colors"> Apple Playful Color Blocks</option>
-                <option value="analog"> Apple Swiss Chronograph Analog</option>
                 <option value="stacked"> Apple Stacked Big Numerals</option>
                 <option value="world"> Apple Dual Time World Clock</option>
               </select>

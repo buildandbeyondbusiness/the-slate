@@ -55,6 +55,13 @@ if command -v adb &> /dev/null; then
         echo "📲 LAUNCHING THE SLATE IN FULLSCREEN MODE..."
         adb shell am start -n com.android.chrome/com.google.android.apps.chrome.Main -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null || adb shell am start -a android.intent.action.VIEW -d "http://localhost:3000" 2>/dev/null
         
+        # 4-Second Hardcoded Auto-Click Fullscreen Trigger
+        (
+          sleep 4
+          echo "⚡ 4 Seconds elapsed: Triggering Fullscreen Auto-Click on Samsung Tab..."
+          adb shell input keyevent 170 2>/dev/null || true
+        ) &
+
         echo ""
         echo "================================================================"
         echo " 🎉 SUCCESS! Streaming live to your Samsung Tab in Fullscreen!"

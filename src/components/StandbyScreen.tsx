@@ -31,16 +31,10 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
 }) => {
   const [hours, setHours] = useState('05');
   const [minutes, setMinutes] = useState('13');
-  const [seconds, setSeconds] = useState(0);
   const [ampmStr, setAmpmStr] = useState('PM');
   const [dateStr, setDateStr] = useState('');
   const [dayAbbr, setDayAbbr] = useState('WED');
   const [dayNum, setDayNum] = useState('26');
-  
-  // Analog hands angles
-  const [hourAngle, setHourAngle] = useState(0);
-  const [minuteAngle, setMinuteAngle] = useState(0);
-  const [secondAngle, setSecondAngle] = useState(0);
 
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
 
@@ -49,7 +43,6 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
       const now = new Date();
       const rawHours = now.getHours();
       const mins = now.getMinutes();
-      const secs = now.getSeconds();
       const ampm = rawHours >= 12 ? 'PM' : 'AM';
       const displayHours = rawHours % 12 || 12;
 
@@ -58,18 +51,12 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
 
       setHours(hStr);
       setMinutes(mStr);
-      setSeconds(secs);
       setAmpmStr(ampm);
       setDateStr(
         now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
       );
       setDayAbbr(now.toLocaleDateString([], { weekday: 'short' }).toUpperCase());
       setDayNum(String(now.getDate()));
-
-      // Analog Angles
-      setSecondAngle(secs * 6);
-      setMinuteAngle(mins * 6 + secs * 0.1);
-      setHourAngle((displayHours % 12) * 30 + mins * 0.5);
     };
 
     updateTime();
@@ -94,7 +81,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
     const diffY = touchStartY - touchEndY;
 
     if (Math.abs(diffY) > 35) {
-      const styles: ClockStyle[] = ['curvy-apple', 'pill-blocks', 'minimal-hero', 'playful-colors', 'analog', 'stacked', 'world'];
+      const styles: ClockStyle[] = ['curvy-apple', 'pill-blocks', 'minimal-hero', 'playful-colors', 'stacked', 'world'];
       const currIdx = styles.indexOf(clockStyle);
       if (diffY > 0) {
         const nextStyle = styles[(currIdx + 1) % styles.length];
@@ -130,15 +117,9 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
 
       // 2. Apple iOS StandBy Translucent Pill Capsules Clock
       case 'pill-blocks':
-        const hDigit1 = hours[0];
-        const hDigit2 = hours[1];
-        const mDigit1 = minutes[0];
-        const mDigit2 = minutes[1];
-
         return (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: 'auto 0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {/* Hours Pill Block */}
               <div style={{ background: 'rgba(255, 255, 255, 0.07)', border: `1px solid ${clockColor}40`, borderRadius: '24px', padding: '12px 22px', backdropFilter: 'blur(16px)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
                 <span style={{ fontSize: '5.5rem', fontWeight: 900, color: clockColor, letterSpacing: '-2px', lineHeight: 1, fontFamily: '"Outfit", sans-serif' }}>
                   {hours}
@@ -147,7 +128,6 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
 
               <span style={{ fontSize: '3rem', fontWeight: 900, color: '#8B9299' }}>:</span>
 
-              {/* Minutes Pill Block */}
               <div style={{ background: 'rgba(255, 255, 255, 0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '24px', padding: '12px 22px', backdropFilter: 'blur(16px)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
                 <span style={{ fontSize: '5.5rem', fontWeight: 900, color: '#F1F3F4', letterSpacing: '-2px', lineHeight: 1, fontFamily: '"Outfit", sans-serif' }}>
                   {minutes}
@@ -219,85 +199,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
           </div>
         );
 
-      // 5. Apple Swiss Analog Clock
-      case 'analog':
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: 'auto 0' }}>
-            <div 
-              style={{ 
-                width: '180px', 
-                height: '180px', 
-                borderRadius: '50%', 
-                border: `4px solid ${clockColor}`, 
-                position: 'relative', 
-                background: 'radial-gradient(circle, #202428 0%, #171A1D 100%)',
-                boxShadow: '0 12px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
-                <div
-                  key={deg}
-                  style={{
-                    position: 'absolute',
-                    width: deg % 90 === 0 ? '4px' : '2px',
-                    height: deg % 90 === 0 ? '10px' : '6px',
-                    background: deg % 90 === 0 ? clockColor : '#8B9299',
-                    transform: `rotate(${deg}deg) translateY(-80px)`
-                  }}
-                />
-              ))}
-
-              <div 
-                style={{
-                  position: 'absolute',
-                  width: '6px',
-                  height: '48px',
-                  background: '#F1F3F4',
-                  borderRadius: '9999px',
-                  transformOrigin: 'bottom center',
-                  transform: `rotate(${hourAngle}deg) translateY(-24px)`,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.5)'
-                }}
-              />
-
-              <div 
-                style={{
-                  position: 'absolute',
-                  width: '4px',
-                  height: '66px',
-                  background: '#F4D28A',
-                  borderRadius: '9999px',
-                  transformOrigin: 'bottom center',
-                  transform: `rotate(${minuteAngle}deg) translateY(-33px)`,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.5)'
-                }}
-              />
-
-              <div 
-                style={{
-                  position: 'absolute',
-                  width: '2px',
-                  height: '75px',
-                  background: clockColor,
-                  borderRadius: '9999px',
-                  transformOrigin: 'bottom center',
-                  transform: `rotate(${secondAngle}deg) translateY(-30px)`
-                }}
-              />
-
-              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: clockColor, zIndex: 10, border: '2px solid #F1F3F4' }} />
-            </div>
-
-            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: clockColor, marginTop: '14px' }}>
-              {hours}:{minutes} {ampmStr}
-            </div>
-          </div>
-        );
-
-      // 6. Stacked Big Numerals
+      // 5. Stacked Big Numerals
       case 'stacked':
         return (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: 'auto 0', width: '100%' }}>
@@ -312,7 +214,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
           </div>
         );
 
-      // 7. Apple World Clock
+      // 6. Apple World Clock
       case 'world':
         return (
           <div style={{ margin: 'auto 0', width: '100%' }}>
@@ -366,7 +268,7 @@ export const StandbyScreen: React.FC<StandbyScreenProps> = ({
             
             {/* Clock Face Indicator Dots */}
             <div style={{ display: 'flex', gap: '4px', marginLeft: '6px' }}>
-              {(['curvy-apple', 'pill-blocks', 'minimal-hero', 'playful-colors', 'analog', 'stacked', 'world'] as ClockStyle[]).map((st) => (
+              {(['curvy-apple', 'pill-blocks', 'minimal-hero', 'playful-colors', 'stacked', 'world'] as ClockStyle[]).map((st) => (
                 <button
                   key={st}
                   onClick={(e) => {
