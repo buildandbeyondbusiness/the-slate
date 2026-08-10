@@ -18,7 +18,7 @@ class MacControllerService {
 
   private mediaState: MediaTrackState = {
     trackName: 'Waiting for Mac Connection...',
-    artist: 'Run Start-The-Slate-Mac-Server on Mac',
+    artist: 'Open http://<mac-ip>:3000 on tablet',
     album: 'Mac Integration',
     albumArt: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80',
     isPlaying: false,
@@ -63,10 +63,7 @@ class MacControllerService {
   }
 
   public connect() {
-    // 1. Try WebSocket
     this.connectWebSocket();
-    
-    // 2. Start HTTP Polling fallback for HTTPS browser environments
     this.startHttpPolling();
   }
 
@@ -75,6 +72,7 @@ class MacControllerService {
       try { this.ws.close(); } catch (e) {}
     }
 
+    // Determine protocol: if page is HTTP, use ws://. If HTTPS, ws:// will be blocked by Mixed Content.
     const wsUrl = `ws://${this.macIp}:${this.port}`;
     try {
       this.ws = new WebSocket(wsUrl);
@@ -111,12 +109,10 @@ class MacControllerService {
 
   private handleWsFailure() {
     if (!this.isConnected) {
-      // Trigger instant HTTP REST fetch fallback
       this.fetchHttpState();
     }
   }
 
-  // HTTP REST API Fallback
   private async fetchHttpState() {
     try {
       const res = await fetch(`http://${this.macIp}:${this.port}/api/state`, {
@@ -137,10 +133,13 @@ class MacControllerService {
       }
     } catch (err) {}
 
-    // Disconnected
-    if (this.isConnected) {
+    // Check if HTTPS Mixed Content is blocking the connection
+    if (window.location.protocol === 'https:') {
+      this.notifyToast(`💡 HTTPS Security Notice: Open http://${this.macIp || '192.168.0.110'}:3000 on tablet for instant connection!`);
+    } else if (this.isConnected) {
       this.notifyToast(`Disconnected from Mac (${this.macIp}). Retrying...`);
     }
+
     this.isConnected = false;
     this.systemSpecs = {
       ...this.systemSpecs,
@@ -168,14 +167,12 @@ class MacControllerService {
     this.notifySpecs();
   }
 
-  // Send Action via WS or HTTP POST
   public async sendAction(payload: any) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(payload));
       return;
     }
 
-    // Fallback to HTTP POST
     try {
       await fetch(`http://${this.macIp}:${this.port}/api/action`, {
         method: 'POST',
@@ -183,7 +180,7 @@ class MacControllerService {
         body: JSON.stringify(payload)
       });
     } catch (e) {
-      this.notifyToast(`Failed to send action to Mac (${this.macIp}). Check Settings.`);
+      this.notifyToast(`Failed to send action. Open http://${this.macIp}:3000 on tablet.`);
     }
   }
 
