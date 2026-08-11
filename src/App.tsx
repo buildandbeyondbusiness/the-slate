@@ -78,6 +78,17 @@ const INITIAL_CARDS: StreamDeckCard[] = [
     badgeText: 'GIT'
   },
   {
+    id: 'card_youtube',
+    title: 'YouTube',
+    subtitle: 'New Tab on Safari',
+    iconName: 'PlayCircle',
+    iconUrl: 'https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/youtube.png',
+    category: 'app',
+    targetAppOrCommand: 'YouTube',
+    accentColor: '#FF0000',
+    badgeText: 'MEDIA'
+  },
+  {
     id: 'card_screenshot',
     title: 'Screenshot',
     subtitle: 'Capture Mac Screen',

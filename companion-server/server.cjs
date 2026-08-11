@@ -334,6 +334,8 @@ async function handleAction(data) {
       runCmd(`open -a "GitHub Desktop" || open "/Applications/GitHub Desktop.app" || open "https://github.com"`);
     } else if (target === 'Gemini') {
       runCmd(`open "https://gemini.google.com"`);
+    } else if (target === 'YouTube' || target === 'YouTube Safari') {
+      runCmd(`open -a "Safari" "https://www.youtube.com" || open "https://www.youtube.com"`);
     } else if (target === 'LockMac') {
       runCmd(`pmset displaysleepnow`);
     } else if (target === 'MuteMac' || target === 'Mute') {
