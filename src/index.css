@@ -57,6 +57,7 @@ html, body, #root {
 /* Application Wrapper */
 .app-container {
   width: 100vw;
+  height: 100%;
   height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -70,9 +71,9 @@ html, body, #root {
 /* TOP CARPLAY HEADER BAR                                   */
 /* ======================================================== */
 .top-bar {
-  height: 54px;
+  height: 50px;
   width: 100%;
-  padding: 0 20px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -87,7 +88,7 @@ html, body, #root {
 .top-bar-left, .top-bar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .top-bar-center {
@@ -97,14 +98,14 @@ html, body, #root {
 }
 
 .time-title {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 800;
   letter-spacing: -0.5px;
   color: var(--text-white);
 }
 
 .date-subtitle {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -116,13 +117,13 @@ html, body, #root {
 .glass-pill-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
+  gap: 6px;
+  padding: 5px 12px;
   border-radius: 9999px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-glass);
   color: var(--text-white);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: transform 90ms var(--ease-apple-fast), background-color 0.2s var(--ease-apple-spring), border-color 0.2s ease;
@@ -140,7 +141,7 @@ html, body, #root {
 }
 
 .icon-badge {
-  padding: 5px;
+  padding: 4px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -150,13 +151,13 @@ html, body, #root {
 .page-dots {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-left: 6px;
+  gap: 5px;
+  margin-left: 4px;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 9999px;
   background: var(--border-glass);
   border: none;
@@ -165,7 +166,7 @@ html, body, #root {
 }
 
 .dot.active {
-  width: 22px;
+  width: 20px;
   background: var(--accent-amber);
   box-shadow: 0 0 12px rgba(224, 168, 78, 0.4);
 }
@@ -176,8 +177,8 @@ html, body, #root {
 .main-content {
   flex: 1;
   width: 100%;
-  height: calc(100dvh - 54px);
-  padding: 12px 18px;
+  height: calc(100% - 50px);
+  padding: 10px 14px;
   position: relative;
   overflow: hidden;
 }
@@ -186,7 +187,7 @@ html, body, #root {
 .standby-grid {
   display: grid;
   grid-template-columns: 1.25fr 1fr;
-  gap: 14px;
+  gap: 10px;
   width: 100%;
   height: 100%;
   max-width: 1350px;
@@ -209,7 +210,7 @@ html, body, #root {
 .glass-card {
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
-  border-radius: 24px;
+  border-radius: 22px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   transition: transform 0.25s var(--ease-apple-spring), background-color 0.25s ease, border-color 0.25s ease;
   position: relative;
@@ -223,7 +224,7 @@ html, body, #root {
 
 /* Hero StandBy Clock Panel */
 .hero-clock-card {
-  padding: 24px;
+  padding: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -234,13 +235,23 @@ html, body, #root {
 .standby-right-stack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   height: 100%;
+  min-height: 0;
 }
 
-.mac-specs-card, .music-player-card {
+.mac-specs-card {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+}
+
+.music-player-card {
   flex: 1;
-  padding: 16px 20px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -251,20 +262,20 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .widget-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+  gap: 6px;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-white);
 }
 
 .badge-pill {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 9999px;
@@ -277,20 +288,20 @@ html, body, #root {
 .spec-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .spec-item-header {
   display: flex;
   justify-content: space-between;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   margin-bottom: 2px;
 }
 
 .progress-track {
   width: 100%;
-  height: 7px;
+  height: 6px;
   border-radius: 9999px;
   background: var(--bg-elevated);
   overflow: hidden;
@@ -318,17 +329,17 @@ html, body, #root {
 .music-content {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   margin: 2px 0;
 }
 
 .album-art-box {
-  width: 62px;
-  height: 62px;
-  border-radius: 14px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
   border: 1px solid var(--border-glass);
   transition: transform 0.3s var(--ease-apple-spring);
 }
@@ -349,7 +360,7 @@ html, body, #root {
 }
 
 .track-name {
-  font-size: 0.98rem;
+  font-size: 0.92rem;
   font-weight: 800;
   color: var(--text-white);
   white-space: nowrap;
@@ -358,7 +369,7 @@ html, body, #root {
 }
 
 .artist-name {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 500;
   color: var(--accent-amber);
   margin-top: 1px;
@@ -367,8 +378,8 @@ html, body, #root {
 .media-controls-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 6px;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 .ctrl-btn {
@@ -376,7 +387,7 @@ html, body, #root {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 4px;
+  padding: 3px;
   border-radius: 50%;
   transition: transform 80ms var(--ease-apple-fast), color 0.2s ease;
 }
@@ -391,8 +402,8 @@ html, body, #root {
 }
 
 .play-btn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--accent-amber);
   color: #0D0F10;
@@ -401,7 +412,7 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(224, 168, 78, 0.4);
+  box-shadow: 0 4px 12px rgba(224, 168, 78, 0.4);
   transition: transform 90ms var(--ease-apple-fast), box-shadow 0.2s ease;
 }
 
@@ -415,22 +426,22 @@ html, body, #root {
 
 /* Timeline Seekbar */
 .seekbar-container {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 input[type=range] {
   width: 100%;
   -webkit-appearance: none;
   background: var(--bg-elevated);
-  height: 5px;
+  height: 4px;
   border-radius: 9999px;
   outline: none;
 }
 
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--accent-amber);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
@@ -445,7 +456,7 @@ input[type=range]::-webkit-slider-thumb:hover {
 .seekbar-timestamps {
   display: flex;
   justify-content: space-between;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-family: monospace;
   color: var(--text-muted);
   margin-top: 2px;
@@ -460,7 +471,7 @@ input[type=range]::-webkit-slider-thumb:hover {
   height: 100%;
   max-width: 1350px;
   margin: 0 auto;
-  padding-bottom: 12px;
+  padding-bottom: 10px;
   animation: appleFadeIn 0.4s var(--ease-apple-spring);
 }
 
@@ -468,19 +479,19 @@ input[type=range]::-webkit-slider-thumb:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .deck-tabs-left, .deck-tabs-center {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .deck-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 12px;
   width: 100%;
   flex: 1;
   overflow-y: auto;
@@ -491,12 +502,12 @@ input[type=range]::-webkit-slider-thumb:hover {
 .macro-card {
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
-  border-radius: 20px;
-  padding: 16px 20px;
+  border-radius: 18px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   cursor: pointer;
   transition: transform 90ms var(--ease-apple-fast), background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
@@ -519,7 +530,7 @@ input[type=range]::-webkit-slider-thumb:hover {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 /* MODALS & OVERLAYS */
@@ -533,7 +544,7 @@ input[type=range]::-webkit-slider-thumb:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
   animation: appleModalBackdrop 0.3s ease;
 }
 
@@ -548,7 +559,7 @@ input[type=range]::-webkit-slider-thumb:hover {
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: 24px;
-  padding: 24px;
+  padding: 20px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
   animation: appleModalSpring 0.4s var(--ease-apple-spring);
 }
@@ -568,13 +579,13 @@ input[type=range]::-webkit-slider-thumb:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border-glass);
 }
 
 .modal-title {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: var(--text-white);
 }
@@ -584,7 +595,7 @@ input[type=range]::-webkit-slider-thumb:hover {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 6px;
+  padding: 5px;
   border-radius: 50%;
   transition: transform 90ms var(--ease-apple-fast), color 0.2s ease;
 }
@@ -599,25 +610,25 @@ input[type=range]::-webkit-slider-thumb:hover {
 
 /* Form Controls */
 .form-group {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .form-label {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .form-input, .form-select {
   width: 100%;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 12px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-glass);
   color: var(--text-white);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   outline: none;
   transition: border-color 0.2s ease;
 }
@@ -631,8 +642,8 @@ input[type=range]::-webkit-slider-thumb:hover {
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 16px;
-  padding-top: 12px;
+  margin-top: 14px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-glass);
 }
 
