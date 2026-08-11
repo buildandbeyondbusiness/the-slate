@@ -381,9 +381,10 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const parsedUrl = url.parse(req.url, true);
+  const reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const pathname = reqUrl.pathname;
 
-  if (parsedUrl.pathname === '/api/state' || parsedUrl.pathname === '/ping' || parsedUrl.pathname === '/') {
+  if (pathname === '/api/state' || pathname === '/ping' || pathname === '/') {
     const specs = await getFullSpecs();
     const media = await getRealMediaState();
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -392,7 +393,7 @@ const server = http.createServer(async (req, res) => {
       systemSpecs: specs,
       mediaState: media
     }));
-  } else if (parsedUrl.pathname === '/api/action') {
+  } else if (pathname === '/api/action') {
     if (req.method === 'POST') {
       let body = '';
       req.on('data', chunk => body += chunk);
@@ -409,13 +410,17 @@ const server = http.createServer(async (req, res) => {
       });
     } else if (req.method === 'GET') {
       try {
-        const query = parsedUrl.query;
-        if (query.action) {
+        const action = reqUrl.searchParams.get('action');
+        const appName = reqUrl.searchParams.get('appName');
+        const volume = reqUrl.searchParams.get('volume');
+        const position = reqUrl.searchParams.get('position');
+
+        if (action) {
           await handleAction({
-            action: query.action,
-            appName: query.appName,
-            volume: query.volume ? Number(query.volume) : undefined,
-            position: query.position ? Number(query.position) : undefined
+            action,
+            appName,
+            volume: volume ? Number(volume) : undefined,
+            position: position ? Number(position) : undefined
           });
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
